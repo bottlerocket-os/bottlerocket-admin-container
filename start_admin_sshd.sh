@@ -14,8 +14,8 @@ touch ${ssh_authorized_keys}
 chmod 600 ${ssh_authorized_keys}
 public_key_base_url="http://169.254.169.254/latest/meta-data/public-keys/"
 public_key_indexes=($(curl -sf "${public_key_base_url}" \
-                      | cut -d= -f1 \
-		      | xargs))
+    | cut -d= -f1 \
+    | xargs))
 
 for public_key_index in ${public_key_indexes}; do
   public_key_data="$(curl -sf ${public_key_base_url}/${public_key_index}/openssh-key)"
@@ -33,7 +33,7 @@ done
 # If we didn't write any keys at all, there's not much point in continuing
 if [ ! -s "${ssh_authorized_keys}" ]; then
   echo "Failed to write any valid public keys to authorized_keys" >&2
-  exit 2
+  exit 1
 fi
 
 chown ec2-user -R "${ssh_config_dir}"
@@ -55,9 +55,9 @@ for key in rsa ecdsa ed25519; do
         chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
     else
         echo "Failure to generate host ${key} ssh keys" >&2
-        exit 2
+        exit 1
     fi
 done
 
 # Start a single sshd process in the foreground
-/usr/sbin/sshd -e -D
+exec /usr/sbin/sshd -e -D

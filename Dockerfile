@@ -1,8 +1,7 @@
 ARG DOCKER_ARCH
-FROM $DOCKER_ARCH/fedora:30 as builder
-RUN sed -i 's/^enabled=.*/enabled=0/' /etc/yum.repos.d/*modular*.repo
-RUN dnf group install -y "C Development Tools and Libraries"
-RUN dnf install -y glibc-static patch
+FROM $DOCKER_ARCH/amazonlinux:2 as builder
+RUN yum group install -y "Development Tools"
+RUN yum install -y glibc-static
 
 ARG bash_version=5.0
 ARG bash_patch_level=11

@@ -1,4 +1,7 @@
 #!/bin/bash
+# This file is part of Bottlerocket.
+# Copyright Amazon.com, Inc., its affiliates, or other contributors. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0 OR MIT
 set -e
 
 mkdir -p /home/ec2-user/.ssh/

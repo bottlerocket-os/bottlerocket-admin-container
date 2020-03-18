@@ -9,7 +9,12 @@ if [[ $EUID -ne 0  ]]; then
 fi
 
 # Location of the container's rootfs on the host filesystem
-ROOT_FS_PATH="/run/host-containerd/io.containerd.runtime.v1.linux/default/admin/rootfs"
+# Because we have a shared pid namespace, /proc inside the container matches
+# /proc outside the container.  The special directory 'root' inside a given
+# process directory in /proc contains that process's view of the filesystem.
+# We use ${PPID} to indicate the pid of the parent process of this script so we
+# can see the container's root filesystem inside this directory.
+ROOT_FS_PATH="/proc/${PPID}/root"
 BASH_PATH="/opt/bin/bash"
 
 # Start the root shell on the Bottlerocket host

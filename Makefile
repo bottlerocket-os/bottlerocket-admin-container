@@ -36,7 +36,7 @@ dist: all
 
 # Build the container image.
 build:
-	docker build \
+	docker build $(DOCKER_BUILD_FLAGS) \
 		--tag $(IMAGE_NAME) \
 		--build-arg IMAGE_VERSION="$(IMAGE_VERSION)" \
 		--build-arg ARCH="$(ARCH)" \
@@ -48,8 +48,11 @@ check: check-static-bash
 
 # Check that bash can be run without dependency on shared libraries.
 check-static-bash:
-	docker run --rm --entrypoint /opt/bin/bash \
-		-v nolib:/usr/lib -v nolib:/usr/lib64 \
+	docker run $(DOCKER_RUN_FLAGS) \
+		--rm \
+		--entrypoint /opt/bin/bash \
+		--mount type=volume,target=/usr/lib,volume-nocopy \
+		--mount type=volume,target=/usr/lib64,volume-nocopy \
 		$(IMAGE_NAME) \
 		-c '/usr/bin/bash -c "echo \$$0 must not run" 2>/dev/null && exit 1 || exit 0'
 

@@ -4,7 +4,7 @@ RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
 ARG bash_version=5.0
-ARG bash_patch_level=11
+ARG bash_patch_level=18
 
 WORKDIR /opt/build
 COPY ./hashes/bash ./hashes

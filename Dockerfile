@@ -3,8 +3,21 @@ FROM $DOCKER_ARCH/amazonlinux:2 as builder
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
+ARG musl_version=1.2.1
 ARG bash_version=5.0
 ARG bash_patch_level=18
+
+WORKDIR /opt/build
+COPY ./hashes/musl ./hashes
+
+RUN \
+  curl -OL https://musl.libc.org/releases/musl-${musl_version}.tar.gz && \
+  grep musl-${musl_version}.tar.gz hashes | sha512sum --check - && \
+  tar -xf musl-${musl_version}.tar.gz && \
+  rm musl-${musl_version}.tar.gz
+
+WORKDIR /opt/build/musl-${musl_version}
+RUN ./configure --enable-static && make -j$(nproc) && make install
 
 WORKDIR /opt/build
 COPY ./hashes/bash ./hashes
@@ -19,7 +32,8 @@ WORKDIR /opt/build/bash-${bash_version}
 RUN for patch_level in $(seq ${bash_patch_level}); do \
         curl -L https://ftp.gnu.org/gnu/bash/bash-${bash_version}-patches/bash${bash_version//.}-$(printf '%03d' $patch_level) | patch -p0; \
     done
-RUN CFLAGS="-Os -DHAVE_DLOPEN=0" ./configure \
+RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
+    ./configure \
         --enable-static-link \
         --without-bash-malloc \
     || { cat config.log; exit 1; }

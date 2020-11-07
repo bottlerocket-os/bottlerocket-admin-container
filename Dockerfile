@@ -48,7 +48,7 @@ RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum update -y \
-    && yum install -y openssh-server sudo util-linux \
+    && yum install -y openssh-server sudo util-linux procps-ng \
     && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/

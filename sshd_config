@@ -3,7 +3,7 @@ HostKey /.bottlerocket/host-containers/admin/etc/ssh/ssh_host_ecdsa_key
 HostKey /.bottlerocket/host-containers/admin/etc/ssh/ssh_host_ed25519_key
 
 PasswordAuthentication no
-
+TrustedUserCAKeys /home/ec2-user/.ssh/authorized_keys
 ChallengeResponseAuthentication no
 
 UsePAM yes

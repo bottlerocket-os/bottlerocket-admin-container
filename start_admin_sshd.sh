@@ -53,6 +53,15 @@ if authorized_keys=$(get_user_data_keys "authorized_keys"); then
   ((++available_auth_methods))
 fi
 
+# Populate trusted_user_ca_keys with all the authorized keys found in user-data
+if trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
+  ssh_trusted_user_ca_keys="/etc/ssh/trusted_user_ca_keys.pub"
+  touch "${ssh_trusted_user_ca_keys}"
+  chmod 600 "${ssh_trusted_user_ca_keys}"
+  echo "${trusted_user_ca_keys}" > "${ssh_trusted_user_ca_keys}"
+  ((++available_auth_methods))
+fi
+
 chown "${local_user}" -R "${user_ssh_dir}"
 
 # If there were no successful auth methods, then users cannot authenticate

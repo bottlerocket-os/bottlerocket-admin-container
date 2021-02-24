@@ -19,13 +19,16 @@ Starting from v0.6.0, users have the option to pass in their own ssh keys rather
 Users can add their own keys by populating the admin container's user-data with a base64-encoded JSON block.
 If user-data is populated then Bottlerocket will not fetch from IMDS at all, but if user-data is not set then Bottlerocket will continue to use the keys from IMDS.
 
-To use custom public keys for `.ssh/authorized_keys` you will want to generate a JSON-structure like this:
+To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `/etc/ssh/trusted_user_ca_keys.pub` you will want to generate a JSON-structure like this:
 
 ```
 {
    "ssh":{
       "authorized_keys":[
          "ssh-rsa EXAMPLEAUTHORIZEDPUBLICKEYHERE my-key-pair"
+      ],
+      "trusted_user_ca_keys":[
+         "ssh-rsa EXAMPLETRUSTEDCAPUBLICKEYHERE authority@ssh-ca.example.com"
       ]
    }
 }

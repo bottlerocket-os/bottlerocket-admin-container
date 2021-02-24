@@ -14,3 +14,6 @@ AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 
 # SFTP is enabled by default in Amazon Linux 2; keeping that behavior here.
 Subsystem sftp	/usr/libexec/openssh/sftp-server
+
+# Configured by user data
+TrustedUserCAKeys /etc/ssh/trusted_user_ca_keys.pub

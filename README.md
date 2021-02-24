@@ -11,3 +11,33 @@ For more information about how the admin container fits into the Bottlerocket op
 
 You'll need Docker 17.06.2 or later, for multi-stage build support.
 Then run `make`!
+
+## Authenticating with the Admin Container
+
+Starting from v0.6.0, users have the option to pass in their own ssh keys rather than the admin container relying on the AWS instance metadata service (IMDS).
+
+Users can add their own keys by populating the admin container's user-data with a base64-encoded JSON block.
+If user-data is populated then Bottlerocket will not fetch from IMDS at all, but if user-data is not set then Bottlerocket will continue to use the keys from IMDS.
+
+To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `/etc/ssh/trusted_user_ca_keys.pub` you will want to generate a JSON-structure like this:
+
+```
+{
+   "ssh":{
+      "authorized_keys":[
+         "ssh-rsa EXAMPLEAUTHORIZEDPUBLICKEYHERE my-key-pair"
+      ],
+      "trusted_user_ca_keys":[
+         "ssh-rsa EXAMPLETRUSTEDCAPUBLICKEYHERE authority@ssh-ca.example.com"
+      ]
+   }
+}
+```
+
+Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).
+
+```
+[settings.host-containers.admin]
+# ex: echo '{"ssh":{"authorized_keys":[]}}' | base64
+user-data = "eyJzc2giOnsiYXV0aG9yaXplZF9rZXlzIjpbXX19"
+```

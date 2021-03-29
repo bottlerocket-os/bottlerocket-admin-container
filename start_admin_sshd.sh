@@ -67,6 +67,7 @@ chown "${local_user}" -R "${user_ssh_dir}"
 # If there were no successful auth methods, then users cannot authenticate
 if [[ "${available_auth_methods}" -eq 0 ]]; then
   log "Failed to configure ssh authentication"
+  exit 1
 fi
 
 # Generate the server keys
@@ -87,6 +88,7 @@ for key in rsa ecdsa ed25519; do
     chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
   else
     log "Failure to generate host ${key} ssh keys"
+    exit 1
   fi
 done
 

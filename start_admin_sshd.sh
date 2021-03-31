@@ -1,31 +1,34 @@
-#!/bin/bash
-# This file is part of Bottlerocket.
-# Copyright Amazon.com, Inc., its affiliates, or other contributors. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0 OR MIT
+#!/usr/bin/env bash
+
 set -e
+
+declare -r PERSISTENT_STORAGE_BASE_DIR="/.bottlerocket/host-containers/current"
+declare -r SSH_HOST_KEY_DIR="${PERSISTENT_STORAGE_BASE_DIR}/etc/ssh"
+declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
+
+declare -r LOCAL_USER="ec2-user"
+declare -r USER_SSH_DIR="/home/${LOCAL_USER}/.ssh"
+
+# This is a counter used to verify at least
+# one of the methods below is available.
+declare -i available_auth_methods=0
 
 log() {
   echo "$*" >&2
 }
 
-declare -r local_user="ec2-user"
-declare -r persistent_storage_base_dir="/.bottlerocket/host-containers/current"
-declare -r ssh_host_key_dir="${persistent_storage_base_dir}/etc/ssh"
-declare -r user_data="${persistent_storage_base_dir}/user-data"
-declare -r user_ssh_dir="/home/${local_user}/.ssh"
-available_auth_methods=0
-
-mkdir -p "${user_ssh_dir}"
-chmod 700 "${user_ssh_dir}"
-
 get_user_data_keys() {
     # Extract the keys from user-data json
     local raw_keys
     local key_type="${1:?}"
-    # ? signifies an optional object identifier-index and doesn't return a 'failed to iterate' error
-    # in the event that a key_type is missing. If jq returns nothing, then that is caught by the -z.
-    if ! raw_keys=$(jq --arg key_type "${key_type}" -e -r '.["ssh"][$key_type][]?' "${user_data}") \
-    || [[ -z "${raw_keys}" ]]; then
+    # ? signifies an optional object identifier-index and doesn't return a
+    # 'failed to iterate' error in the event that a key_type is missing.
+    if ! raw_keys=$(jq --arg key_type "${key_type}" -e -r '.["ssh"][$key_type][]?' "${USER_DATA}"); then
+      return 1
+    fi
+
+    # Verify jq returned key(s)
+    if [[ -z "${raw_keys}" ]]; then
       return 1
     fi
 
@@ -58,16 +61,19 @@ EOF
   chmod 644 "${proxy_profile}"
 }
 
+mkdir -p "${USER_SSH_DIR}"
+chmod 700 "${USER_SSH_DIR}"
+
 # Populate authorized_keys with all the authorized keys found in user-data
 if authorized_keys=$(get_user_data_keys "authorized_keys"); then
-  ssh_authorized_keys="${user_ssh_dir}/authorized_keys"
+  ssh_authorized_keys="${USER_SSH_DIR}/authorized_keys"
   touch "${ssh_authorized_keys}"
   chmod 600 "${ssh_authorized_keys}"
   echo "${authorized_keys}" > "${ssh_authorized_keys}"
   ((++available_auth_methods))
 fi
 
-# Populate trusted_user_ca_keys with all the authorized keys found in user-data
+# Populate trusted_user_ca_keys with all the trusted ca keys found in user-data
 if trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
   ssh_trusted_user_ca_keys="/etc/ssh/trusted_user_ca_keys.pub"
   touch "${ssh_trusted_user_ca_keys}"
@@ -76,33 +82,33 @@ if trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
   ((++available_auth_methods))
 fi
 
-chown "${local_user}" -R "${user_ssh_dir}"
+chown -R "${LOCAL_USER}:" "${USER_SSH_DIR}"
 
 # If there were no successful auth methods, then users cannot authenticate
 if [[ "${available_auth_methods}" -eq 0 ]]; then
-  user_data_condensed=$(tr -d '[:space:]' < "${user_data}")
+  user_data_condensed=$(tr -d '[:space:]' < "${USER_DATA}")
   log "Failed to configure ssh authentication with user-data: ${user_data_condensed}"
   exit 1
 fi
 
 # Generate the server keys
-mkdir -p "${ssh_host_key_dir}"
-for key in rsa ecdsa ed25519; do
+mkdir -p "${SSH_HOST_KEY_DIR}"
+for key_alg in rsa ecdsa ed25519; do
   # If both of the keys exist, don't overwrite them
-  if [ -s "${ssh_host_key_dir}/ssh_host_${key}_key" ] &&
-  [ -s "${ssh_host_key_dir}/ssh_host_${key}_key.pub" ]; then
-    log "${key} key already exists, will use existing key."
+  if [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" ]] \
+  && [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" ]]; then
+    log "${key_alg} key already exists, will use existing key."
     continue
   fi
 
   rm -rf \
-    "${ssh_host_key_dir}/ssh_host_${key}_key" \
-    "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
-  if ssh-keygen -t "${key}" -f "${ssh_host_key_dir}/ssh_host_${key}_key" -q -N ""; then
-    chmod 600 "${ssh_host_key_dir}/ssh_host_${key}_key"
-    chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
+    "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" \
+    "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
+  if ssh-keygen -t "${key_alg}" -f "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
+    chmod 600 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key"
+    chmod 644 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
   else
-    log "Failure to generate host ${key} ssh keys"
+    log "Failure to generate host ${key_alg} ssh keys"
     exit 1
   fi
 done

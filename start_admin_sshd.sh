@@ -21,8 +21,10 @@ get_user_data_keys() {
     # Extract the keys from user-data json
     local raw_keys
     local key_type="${1:?}"
-    if ! raw_keys=$(jq --arg key_type "${key_type}" -e -r '.["ssh"][$key_type][]' "${user_data}" 2>/dev/null); then
-      log "Failed to parse ${key_type} from ${user_data}"
+    # ? signifies an optional object identifier-index and doesn't return a 'failed to iterate' error
+    # in the event that a key_type is missing. If jq returns nothing, then that is caught by the -z.
+    if ! raw_keys=$(jq --arg key_type "${key_type}" -e -r '.["ssh"][$key_type][]?' "${user_data}") \
+    || [[ -z "${raw_keys}" ]]; then
       return 1
     fi
 
@@ -66,7 +68,9 @@ chown "${local_user}" -R "${user_ssh_dir}"
 
 # If there were no successful auth methods, then users cannot authenticate
 if [[ "${available_auth_methods}" -eq 0 ]]; then
-  log "Failed to configure ssh authentication"
+  user_data_condensed=$(tr -d '[:space:]' < "${user_data}")
+  log "Failed to configure ssh authentication with user-data: ${user_data_condensed}"
+  exit 1
 fi
 
 # Generate the server keys
@@ -87,6 +91,7 @@ for key in rsa ecdsa ed25519; do
     chmod 644 "${ssh_host_key_dir}/ssh_host_${key}_key.pub"
   else
     log "Failure to generate host ${key} ssh keys"
+    exit 1
   fi
 done
 

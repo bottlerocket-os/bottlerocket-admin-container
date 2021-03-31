@@ -9,8 +9,9 @@ log() {
 }
 
 declare -r local_user="ec2-user"
-declare -r ssh_host_key_dir="/.bottlerocket/host-containers/admin/etc/ssh"
-declare -r user_data="/.bottlerocket/host-containers/admin/user-data"
+declare -r persistent_storage_base_dir="/.bottlerocket/host-containers/current"
+declare -r ssh_host_key_dir="${persistent_storage_base_dir}/etc/ssh"
+declare -r user_data="${persistent_storage_base_dir}/user-data"
 declare -r user_ssh_dir="/home/${local_user}/.ssh"
 available_auth_methods=0
 

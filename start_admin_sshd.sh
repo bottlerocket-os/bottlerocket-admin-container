@@ -47,6 +47,17 @@ get_user_data_keys() {
     ( IFS=$'\n'; echo "${valid_keys[*]}" )
 }
 
+# Export proxy environment variables for all users' login shells
+# Match the values of the proxy environment variables given to the admin container
+install_proxy_profile() {
+  local -r proxy_profile="/etc/profile.d/bottlerocket-proxy-settings.sh"
+  cat > "${proxy_profile}" <<EOF
+# Export Bottlerocket proxy environment variables
+$(declare -p HTTP_PROXY HTTPS_PROXY no_proxy NO_PROXY 2>/dev/null)
+EOF
+  chmod 644 "${proxy_profile}"
+}
+
 # Populate authorized_keys with all the authorized keys found in user-data
 if authorized_keys=$(get_user_data_keys "authorized_keys"); then
   ssh_authorized_keys="${user_ssh_dir}/authorized_keys"
@@ -95,6 +106,8 @@ for key in rsa ecdsa ed25519; do
     exit 1
   fi
 done
+
+install_proxy_profile
 
 # Start a single sshd process in the foreground
 exec /usr/sbin/sshd -e -D

@@ -86,7 +86,7 @@ chown -R "${LOCAL_USER}:" "${USER_SSH_DIR}"
 
 # If there were no successful auth methods, then users cannot authenticate
 if [[ "${available_auth_methods}" -eq 0 ]]; then
-  user_data_condensed=$(tr -d '[:space:]' < "${USER_DATA}")
+  user_data_condensed=$(jq -e -c . "${USER_DATA}" 2>/dev/null || cat "${USER_DATA}")
   log "Failed to configure ssh authentication with user-data: ${user_data_condensed}"
   exit 1
 fi

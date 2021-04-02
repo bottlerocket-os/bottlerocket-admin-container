@@ -24,10 +24,10 @@ To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `
 ```
 {
    "ssh":{
-      "authorized_keys":[
+      "authorized-keys":[
          "ssh-rsa EXAMPLEAUTHORIZEDPUBLICKEYHERE my-key-pair"
       ],
-      "trusted_user_ca_keys":[
+      "trusted-user-ca-keys":[
          "ssh-rsa EXAMPLETRUSTEDCAPUBLICKEYHERE authority@ssh-ca.example.com"
       ]
    }
@@ -38,6 +38,6 @@ Once you've created your JSON, you'll need to base64-encode it and set it as the
 
 ```
 [settings.host-containers.admin]
-# ex: echo '{"ssh":{"authorized_keys":[]}}' | base64
-user-data = "eyJzc2giOnsiYXV0aG9yaXplZF9rZXlzIjpbXX19"
+# ex: echo '{"ssh":{"authorized-keys":[]}}' | base64
+user-data = "eyJzc2giOnsiYXV0aG9yaXplZC1rZXlzIjpbXX19Cg=="
 ```

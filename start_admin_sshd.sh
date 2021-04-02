@@ -65,7 +65,8 @@ mkdir -p "${USER_SSH_DIR}"
 chmod 700 "${USER_SSH_DIR}"
 
 # Populate authorized_keys with all the authorized keys found in user-data
-if authorized_keys=$(get_user_data_keys "authorized_keys"); then
+if authorized_keys=$(get_user_data_keys "authorized-keys") \
+|| authorized_keys=$(get_user_data_keys "authorized_keys"); then
   ssh_authorized_keys="${USER_SSH_DIR}/authorized_keys"
   touch "${ssh_authorized_keys}"
   chmod 600 "${ssh_authorized_keys}"
@@ -74,7 +75,8 @@ if authorized_keys=$(get_user_data_keys "authorized_keys"); then
 fi
 
 # Populate trusted_user_ca_keys with all the trusted ca keys found in user-data
-if trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
+if trusted_user_ca_keys=$(get_user_data_keys "trusted-user-ca-keys") \
+|| trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
   ssh_trusted_user_ca_keys="/etc/ssh/trusted_user_ca_keys.pub"
   touch "${ssh_trusted_user_ca_keys}"
   chmod 600 "${ssh_trusted_user_ca_keys}"

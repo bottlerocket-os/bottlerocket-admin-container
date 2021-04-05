@@ -1,3 +1,21 @@
+# 0.7.0
+
+* Switch paths from `/.bottlerocket/host-containers/admin` to `/.bottlerocket/host-containers/current` ([#21])
+* Export Bottlerocket proxy ENV variables for all login shells. ([#24])
+* Add support for `user-data` settings in kebab-case (recommended default). ([#26])
+* Switch from old docker build environment to docker buildkit by default. ([#14])
+* Improve error handling and logging during ssh setup. ([#20])
+* Fix condensed output of user data in error messages to keep intentional spaces. ([#25])
+* Clean up the start sshd script to be more consistent with recent control container updates. ([#22])
+
+[#14]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/14
+[#20]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/20
+[#21]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/21
+[#22]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/22
+[#24]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/24
+[#25]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/25
+[#26]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/26
+
 # 0.6.0
 
 * Use user-data file rather than IMDS directly to set public keys. ([#19])

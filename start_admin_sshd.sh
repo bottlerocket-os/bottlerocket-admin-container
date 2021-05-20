@@ -90,7 +90,6 @@ chown -R "${LOCAL_USER}:" "${USER_SSH_DIR}"
 if [[ "${available_auth_methods}" -eq 0 ]]; then
   user_data_condensed=$(jq -e -c . "${USER_DATA}" 2>/dev/null || cat "${USER_DATA}")
   log "Failed to configure ssh authentication with user-data: ${user_data_condensed}"
-  exit 1
 fi
 
 # Generate the server keys
@@ -111,7 +110,6 @@ for key_alg in rsa ecdsa ed25519; do
     chmod 644 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
   else
     log "Failure to generate host ${key_alg} ssh keys"
-    exit 1
   fi
 done
 

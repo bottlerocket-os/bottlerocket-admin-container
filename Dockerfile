@@ -3,7 +3,7 @@ FROM $DOCKER_ARCH/amazonlinux:2 as builder
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
-ARG musl_version=1.2.1
+ARG musl_version=1.2.2
 ARG bash_version=5.0
 ARG bash_patch_level=18
 

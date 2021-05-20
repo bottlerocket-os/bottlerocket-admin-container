@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euxo pipefail
+# shellcheck disable=SC2046
+curl --fail --remote-name-all --remote-time \
+    $(awk -F '[ ()]' '/^SHA512 \(/ {
+        printf "https://cache.bottlerocket.aws/%s/%s/%s\n", $3, $6, $3
+    }' "$1")
+sha512sum --check "$1"

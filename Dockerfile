@@ -8,13 +8,15 @@ ARG bash_version=5.0
 ARG bash_patch_level=18
 
 WORKDIR /opt/build
+COPY ./sdk-fetch ./
+
+WORKDIR /opt/build
 COPY ./hashes/musl ./hashes
 
 RUN \
-  curl -OL https://musl.libc.org/releases/musl-${musl_version}.tar.gz && \
-  grep musl-${musl_version}.tar.gz hashes | sha512sum --check - && \
+  ./sdk-fetch hashes && \
   tar -xf musl-${musl_version}.tar.gz && \
-  rm musl-${musl_version}.tar.gz
+  rm musl-${musl_version}.tar.gz hashes
 
 WORKDIR /opt/build/musl-${musl_version}
 RUN ./configure --enable-static && make -j$(nproc) && make install
@@ -23,14 +25,13 @@ WORKDIR /opt/build
 COPY ./hashes/bash ./hashes
 
 RUN \
-  curl -OL https://ftp.gnu.org/gnu/bash/bash-${bash_version}.tar.gz && \
-  grep bash-${bash_version}.tar.gz hashes | sha512sum --check - && \
+  ./sdk-fetch hashes && \
   tar -xf bash-${bash_version}.tar.gz && \
-  rm bash-${bash_version}.tar.gz
+  rm bash-${bash_version}.tar.gz hashes
 
 WORKDIR /opt/build/bash-${bash_version}
 RUN for patch_level in $(seq ${bash_patch_level}); do \
-        curl -L https://ftp.gnu.org/gnu/bash/bash-${bash_version}-patches/bash${bash_version//.}-$(printf '%03d' $patch_level) | patch -p0; \
+        patch -p0 < /opt/build/bash${bash_version//.}-$(printf '%03d' $patch_level); \
     done
 RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
     ./configure \

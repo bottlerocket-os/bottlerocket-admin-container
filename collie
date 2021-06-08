@@ -1,0 +1,55 @@
+#!/bin/bash
+set -euo pipefail
+
+usage() {
+   cat <<-EOF >&2
+	Usage: collie [ --tty | -t ] CONTAINER [ COMMAND [ ARGS ] ]
+
+	Runs the given command inside the given host container.
+
+	COMMAND defaults to /bin/bash.
+	EOF
+}
+
+TTY=""
+CONTAINER=""
+
+while [ "${#}" -gt 0 ]; do
+   case "${1}" in
+      --tty | -t ) TTY="please" ;;
+      --help | -h ) usage; exit 0 ;;
+      -*) usage; exit 1 ;;
+      *)
+         if [ -z "${CONTAINER}" ]; then
+            CONTAINER="${1}"
+         else
+            # remainder is command/args
+            break
+         fi
+         ;;
+   esac
+   shift
+done
+
+if [ -z "${CONTAINER}" ]; then
+   echo -e "Must specify host container name.\n" >&2
+   usage
+   exit 1
+fi
+
+if [ "${#}" -eq 0 ]; then
+   TTY="yes, so the /bin/bash default works as expected"
+fi
+
+if [[ "${EUID}" -ne 0 ]]; then
+    echo "collie must be run as root, try 'sudo collie'" >&2
+    exit 1
+fi
+
+exec nsenter -t 1 -a \
+   /bin/ctr -a /run/host-containerd/containerd.sock \
+   task exec \
+   --exec-id "collie-$$-${RANDOM}" \
+   ${TTY:+--tty} \
+   "${CONTAINER}" \
+   "${@:-/bin/bash}"

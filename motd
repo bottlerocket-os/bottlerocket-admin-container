@@ -9,3 +9,8 @@ To permit more intrusive troubleshooting, including actions that mutate the
 running state of the Bottlerocket host, we provide a tool called "sheltie"
 (`sudo sheltie`).  When run, this tool drops you into a root shell in the
 Bottlerocket host's root filesystem.
+
+We also provide a tool called "collie" that can run processes in other host
+containers for debugging purposes.  It runs `/bin/bash` by default, so for
+example, running `sudo collie control` will give you a shell in the control
+container.

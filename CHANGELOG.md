@@ -1,3 +1,13 @@
+# 0.7.1
+
+* Remove exits added to the sshd configuration script in v0.7.0. ([#33])
+* Update musl to 1.2.2. ([#34])
+* Pull bash and musl sources from lookaside cache, instead of from upstream. ([#35])
+
+[#33]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/33
+[#34]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/34
+[#35]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/35
+
 # 0.7.0
 
 * Switch paths from `/.bottlerocket/host-containers/admin` to `/.bottlerocket/host-containers/current` ([#21])

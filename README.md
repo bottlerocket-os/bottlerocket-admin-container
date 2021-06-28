@@ -34,6 +34,16 @@ To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `
 }
 ```
 
+If you want to access to the admin container using [EC2 instance connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Connect-using-EC2-Instance-Connect.html), set `authorized-keys-command` and `authorized-keys-command-user` as follows:
+```
+{
+    "ssh": {
+      "authorized-keys-command": "/opt/aws/bin/eic_run_authorized_keys %u %f",
+      "authorized-keys-command-user": "ec2-instance-connect"
+    }
+}
+```
+
 Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).
 
 ```

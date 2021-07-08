@@ -14,6 +14,7 @@ Then run `make`!
 
 ## Authenticating with the Admin Container
 
+### Uploading user keys
 Starting from v0.6.0, users have the option to pass in their own ssh keys rather than the admin container relying on the AWS instance metadata service (IMDS).
 
 Users can add their own keys by populating the admin container's user-data with a base64-encoded JSON block.
@@ -41,3 +42,8 @@ Once you've created your JSON, you'll need to base64-encode it and set it as the
 # ex: echo '{"ssh":{"authorized-keys":[]}}' | base64
 user-data = "eyJzc2giOnsiYXV0aG9yaXplZC1rZXlzIjpbXX19Cg=="
 ```
+
+### EC2 instance connect
+
+If your bottlerocket instance profile is [configured to allow EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html#ec2-instance-connect-configure-IAM-role),
+you can connect to the admin container (from 0.7.2).

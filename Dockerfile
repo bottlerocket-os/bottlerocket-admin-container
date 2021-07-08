@@ -7,6 +7,10 @@ ARG musl_version=1.2.2
 ARG bash_version=5.0
 ARG bash_patch_level=18
 
+WORKDIR /opt/aws/bin
+COPY ./aws-ec2-instance-connect-config/src/bin ./
+RUN /bin/sed -i "s%^ca_path=/etc/ssl/certs$%ca_path=/etc/ssl/certs/ca-bundle.crt%" eic_curl_authorized_keys
+
 WORKDIR /opt/build
 COPY ./sdk-fetch ./
 
@@ -49,10 +53,11 @@ RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum update -y \
-    && yum install -y openssh-server sudo util-linux procps-ng jq \
+    && yum install -y openssl openssh-server sudo util-linux procps-ng jq \
     && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/
+COPY --from=builder /opt/aws/bin /opt/aws/bin/
 
 RUN rm -f /etc/motd /etc/issue
 ADD --chown=root:root motd /etc/
@@ -67,6 +72,7 @@ RUN chmod +x /usr/sbin/start_admin_sshd.sh
 RUN chmod +x /usr/bin/sheltie
 RUN groupadd -g 274 api
 RUN useradd -m -G users,api ec2-user
+RUN useradd -r -s /bin/false ec2-instance-connect
 
 CMD ["/usr/sbin/start_admin_sshd.sh"]
 ENTRYPOINT ["/bin/bash", "-c"]

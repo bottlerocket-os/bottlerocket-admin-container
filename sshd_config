@@ -17,3 +17,7 @@ Subsystem sftp	/usr/libexec/openssh/sftp-server
 
 # Configured by user data
 TrustedUserCAKeys /etc/ssh/trusted_user_ca_keys.pub
+
+# Enable EC2 Instance Connect
+AuthorizedKeysCommand /opt/aws/bin/eic_run_authorized_keys %u %f
+AuthorizedKeysCommandUser ec2-instance-connect

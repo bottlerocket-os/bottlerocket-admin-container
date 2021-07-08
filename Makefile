@@ -37,6 +37,7 @@ dist: all
 # Build the container image.
 build: export DOCKER_BUILDKIT = 1
 build:
+	git submodule update --init
 	docker build $(DOCKER_BUILD_FLAGS) \
 		--tag $(IMAGE_NAME) \
 		--build-arg IMAGE_VERSION="$(IMAGE_VERSION)" \

@@ -8,6 +8,8 @@ declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
 
 declare -r LOCAL_USER="ec2-user"
 declare -r USER_SSH_DIR="/home/${LOCAL_USER}/.ssh"
+declare -r SSHD_CONFIG_DIR="/etc/ssh"
+declare -r SSHD_CONFIG_FILE="${SSHD_CONFIG_DIR}/sshd_config"
 
 # This is a counter used to verify at least
 # one of the methods below is available.
@@ -84,6 +86,25 @@ if trusted_user_ca_keys=$(get_user_data_keys "trusted-user-ca-keys") \
   ((++available_auth_methods))
 fi
 
+# Set additional configurations
+declare authorized_keys_command
+if authorized_keys_command=$(jq -e -r '.["ssh"]["authorized-keys-command"]?' "${USER_DATA}"); then
+  echo "AuthorizedKeysCommand ${authorized_keys_command}" >> "${SSHD_CONFIG_FILE}"
+fi
+
+declare authorized_keys_command_user
+if authorized_keys_command_user=$(jq -e -r '.["ssh"]["authorized-keys-command-user"]?' "${USER_DATA}"); then
+  echo "AuthorizedKeysCommandUser ${authorized_keys_command_user}" >> "${SSHD_CONFIG_FILE}"
+fi
+
+# Check the configurations are for EC2 instance connect
+declare -i use_eic=0
+if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \
+&& [[ $authorized_keys_command_user == "ec2-instance-connect" ]]; then
+  use_eic=1
+  ((++available_auth_methods))
+fi
+
 chown -R "${LOCAL_USER}:" "${USER_SSH_DIR}"
 
 # If there were no successful auth methods, then users cannot authenticate
@@ -98,6 +119,7 @@ for key_alg in rsa ecdsa ed25519; do
   # If both of the keys exist, don't overwrite them
   if [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" ]] \
   && [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" ]]; then
+    ln -sf "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" "${SSHD_CONFIG_DIR}/ssh_host_${key_alg}_key.pub"
     log "${key_alg} key already exists, will use existing key."
     continue
   fi
@@ -108,10 +130,19 @@ for key_alg in rsa ecdsa ed25519; do
   if ssh-keygen -t "${key_alg}" -f "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
     chmod 600 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key"
     chmod 644 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
+    ln -sf "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" "${SSHD_CONFIG_DIR}/ssh_host_${key_alg}_key.pub"
   else
     log "Failure to generate host ${key_alg} ssh keys"
   fi
 done
+
+
+if [[ ${use_eic} == 1 ]] && [[ ! -f "${SSH_HOST_KEY_DIR}/harvest" ]]; then
+  if ! /opt/aws/bin/eic_harvest_hostkeys; then
+    log "Failure to harvest hostkeys for EIC"
+  fi
+  touch "${SSH_HOST_KEY_DIR}/harvest"
+fi
 
 install_proxy_profile
 

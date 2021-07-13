@@ -49,7 +49,7 @@ RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum update -y \
-    && yum install -y openssh-server sudo util-linux procps-ng jq \
+    && yum install -y openssh-server sudo util-linux procps-ng jq openssl ec2-instance-connect \
     && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/

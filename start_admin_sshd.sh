@@ -98,7 +98,7 @@ if authorized_keys_command_user=$(jq -e -r '.["ssh"]["authorized-keys-command-us
 fi
 
 # Populate ciphers with all the ciphers found in user-data
-if ciphers=$(jq -c '.["ssh"]["ciphers"]?' "${USER_DATA}" | tr -d '[]"'); then
+if ciphers=$(jq -r -e -c '.["ssh"]["ciphers"]? | join(",")' "${USER_DATA}" 2>/dev/null); then
   echo "Ciphers ${ciphers}" >> "${SSHD_CONFIG_FILE}"
 fi
 

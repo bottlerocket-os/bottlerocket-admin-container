@@ -97,6 +97,11 @@ if authorized_keys_command_user=$(jq -e -r '.["ssh"]["authorized-keys-command-us
   echo "AuthorizedKeysCommandUser ${authorized_keys_command_user}" >> "${SSHD_CONFIG_FILE}"
 fi
 
+# Populate ciphers with all the ciphers found in user-data
+if ciphers=$(jq -r -e -c '.["ssh"]["ciphers"]? | join(",")' "${USER_DATA}" 2>/dev/null); then
+  echo "Ciphers ${ciphers}" >> "${SSHD_CONFIG_FILE}"
+fi
+
 # Check the configurations are for EC2 instance connect
 declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \

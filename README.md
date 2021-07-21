@@ -44,6 +44,24 @@ If you want to access to the admin container using [EC2 instance connect](https:
 }
 ```
 
+To change allowed SSH ciphers to a specific set, you can add a ciphers section:
+
+```
+{
+  "ssh":{
+    "authorized-keys...",
+    "ciphers": [
+        "chacha20-poly1305@openssh.com",
+        "aes128-ctr",
+        "aes192-ctr",
+        "aes256-ctr",
+        "aes128-gcm@openssh.com",
+        "aes256-gcm@openssh.com"
+    ]
+  }
+}
+```
+
 Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).
 
 ```

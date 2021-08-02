@@ -1,3 +1,11 @@
+# 0.7.2
+
+* Add support for EC2 Instance Connect. ([#39], **thanks @samjo-nyang!**)
+* Disable root login and allow for custom SSH cipher list. ([#42], **thanks  @willthames!**)
+
+[#39]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/39
+[#42]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/42
+
 # 0.7.1
 
 * Remove exits added to the sshd configuration script in v0.7.0. ([#33])

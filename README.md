@@ -62,6 +62,17 @@ To change allowed SSH ciphers to a specific set, you can add a ciphers section:
 }
 ```
 
+By default, the admin container's local user will be `ec2-user`. If you would like to change this, you can set the user value like so:
+
+```
+{
+  "user": "bottlerocket",
+  "ssh": {
+    "authorized-keys...",
+  }
+}
+```
+
 Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).
 
 ```

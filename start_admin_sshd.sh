@@ -2,11 +2,21 @@
 
 set -e
 
+log() {
+  echo "$*" >&2
+}
+
 declare -r PERSISTENT_STORAGE_BASE_DIR="/.bottlerocket/host-containers/current"
 declare -r SSH_HOST_KEY_DIR="${PERSISTENT_STORAGE_BASE_DIR}/etc/ssh"
 declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
 
-declare -r LOCAL_USER="ec2-user"
+# Fetch user from user-data json (if any). Default to 'ec2-user' if null or invalid.
+if ! LOCAL_USER=$(jq -e -r '.["user"] // "ec2-user"' "${USER_DATA}" 2>/dev/null) \
+|| [[ ! "${LOCAL_USER}" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]; then
+  log "Failed to set user from user-data. Proceeding with 'ec2-user'."
+  LOCAL_USER="ec2-user"
+fi
+
 declare -r USER_SSH_DIR="/home/${LOCAL_USER}/.ssh"
 declare -r SSHD_CONFIG_DIR="/etc/ssh"
 declare -r SSHD_CONFIG_FILE="${SSHD_CONFIG_DIR}/sshd_config"
@@ -14,10 +24,6 @@ declare -r SSHD_CONFIG_FILE="${SSHD_CONFIG_DIR}/sshd_config"
 # This is a counter used to verify at least
 # one of the methods below is available.
 declare -i available_auth_methods=0
-
-log() {
-  echo "$*" >&2
-}
 
 get_user_data_keys() {
     # Extract the keys from user-data json
@@ -63,6 +69,10 @@ EOF
   chmod 644 "${proxy_profile}"
 }
 
+# Create local user
+echo "${LOCAL_USER} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${LOCAL_USER}"
+chmod 440 "/etc/sudoers.d/${LOCAL_USER}"
+useradd -m -G users,api "${LOCAL_USER}"
 mkdir -p "${USER_SSH_DIR}"
 chmod 700 "${USER_SSH_DIR}"
 

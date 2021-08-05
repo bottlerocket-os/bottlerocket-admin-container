@@ -23,24 +23,24 @@ To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `
 
 ```
 {
-   "ssh":{
-      "authorized-keys":[
-         "ssh-rsa EXAMPLEAUTHORIZEDPUBLICKEYHERE my-key-pair"
-      ],
-      "trusted-user-ca-keys":[
-         "ssh-rsa EXAMPLETRUSTEDCAPUBLICKEYHERE authority@ssh-ca.example.com"
-      ]
-   }
+  "ssh": {
+    "authorized-keys": [
+      "ssh-rsa EXAMPLEAUTHORIZEDPUBLICKEYHERE my-key-pair"
+    ],
+    "trusted-user-ca-keys": [
+      "ssh-rsa EXAMPLETRUSTEDCAPUBLICKEYHERE authority@ssh-ca.example.com"
+    ]
+  }
 }
 ```
 
 If you want to access to the admin container using [EC2 instance connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Connect-using-EC2-Instance-Connect.html), set `authorized-keys-command` and `authorized-keys-command-user` as follows:
 ```
 {
-    "ssh": {
-      "authorized-keys-command": "/opt/aws/bin/eic_run_authorized_keys %u %f",
-      "authorized-keys-command-user": "ec2-instance-connect"
-    }
+  "ssh": {
+    "authorized-keys-command": "/opt/aws/bin/eic_run_authorized_keys %u %f",
+    "authorized-keys-command-user": "ec2-instance-connect"
+  }
 }
 ```
 
@@ -48,7 +48,7 @@ To change allowed SSH ciphers to a specific set, you can add a ciphers section:
 
 ```
 {
-  "ssh":{
+  "ssh": {
     "authorized-keys...",
     "ciphers": [
         "chacha20-poly1305@openssh.com",
@@ -58,6 +58,17 @@ To change allowed SSH ciphers to a specific set, you can add a ciphers section:
         "aes128-gcm@openssh.com",
         "aes256-gcm@openssh.com"
     ]
+  }
+}
+```
+
+By default, the admin container's local user will be `ec2-user`. If you would like to change this, you can set the user value like so:
+
+```
+{
+  "user": "bottlerocket",
+  "ssh": {
+    "authorized-keys...",
   }
 }
 ```

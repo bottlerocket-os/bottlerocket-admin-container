@@ -62,6 +62,24 @@ To change allowed SSH ciphers to a specific set, you can add a ciphers section:
 }
 ```
 
+To change allowed key exchange algorithms to a specific set, you can add a
+`key-exchange-algorithms` section:
+```
+{
+  "ssh": {
+    "authorized-keys...",
+    "key-exchange-algorithms": [
+        "curve25519-sha256",
+        "curve25519-sha256@libssh.org",
+        "ecdh-sha2-nistp256",
+        "ecdh-sha2-nistp384",
+        "ecdh-sha2-nistp521",
+        "diffie-hellman-group-exchange-sha256"
+    ]
+  }
+}
+```
+
 By default, the admin container's local user will be `ec2-user`. If you would like to change this, you can set the user value like so:
 
 ```

@@ -112,6 +112,11 @@ if ciphers=$(jq -r -e -c '.["ssh"]["ciphers"]? | join(",")' "${USER_DATA}" 2>/de
   echo "Ciphers ${ciphers}" >> "${SSHD_CONFIG_FILE}"
 fi
 
+# Populate KexAlgorithms with all the key exchange algorithms found in user-data
+if kex_algorithms=$(jq -r -e -c '.["ssh"]["key-exchange-algorithms"]? | join(",")' "${USER_DATA}" 2>/dev/null); then
+  echo "KexAlgorithms ${kex_algorithms}" >> "${SSHD_CONFIG_FILE}"
+fi
+
 # Check the configurations are for EC2 instance connect
 declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \

@@ -18,4 +18,8 @@ ROOT_FS_PATH="/proc/${PPID}/root"
 BASH_PATH="/opt/bin/bash"
 
 # Start the root shell on the Bottlerocket host
-exec nsenter -t 1 -a "${ROOT_FS_PATH}${BASH_PATH}"
+if [[ ${#@} -ne 0 ]]; then
+  exec nsenter -t 1 -a -- "$@"
+else
+  exec nsenter -t 1 -a "${ROOT_FS_PATH}${BASH_PATH}"
+fi

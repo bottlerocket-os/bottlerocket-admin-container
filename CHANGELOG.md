@@ -1,3 +1,13 @@
+# 0.7.3
+
+* Add support for custom username. ([#45])
+* Allow setting key exchange algorithms. ([#46], **thanks  @willthames!**)
+* Add support for passing single commands through sheltie. ([#50])
+
+[#45]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/45
+[#46]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/46
+[#50]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/50
+
 # 0.7.2
 
 * Add support for EC2 Instance Connect. ([#39], **thanks @samjo-nyang!**)

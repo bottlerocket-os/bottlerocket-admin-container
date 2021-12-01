@@ -1,5 +1,6 @@
 ARG DOCKER_ARCH
 FROM $DOCKER_ARCH/amazonlinux:2 as builder
+RUN yum update -y
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 

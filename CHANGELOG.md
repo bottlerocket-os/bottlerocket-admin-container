@@ -1,3 +1,9 @@
+# 0.7.4
+
+* Rebuilt to get the latest AL2 updates. ([#52])
+
+[#52]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/52
+
 # 0.7.3
 
 * Add support for custom username. ([#45])

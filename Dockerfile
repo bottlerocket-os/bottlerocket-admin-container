@@ -1,5 +1,4 @@
-ARG DOCKER_ARCH
-FROM $DOCKER_ARCH/amazonlinux:2 as builder
+FROM amazonlinux:2 as builder
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
@@ -41,7 +40,7 @@ RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
 RUN make -j`nproc`
 RUN cp bash /opt/bash
 
-FROM $DOCKER_ARCH/amazonlinux:2
+FROM amazonlinux:2
 
 ARG IMAGE_VERSION
 # Make the container image version a mandatory build argument

@@ -27,9 +27,8 @@ dist: all
 	docker save $(IMAGE_NAME) | gzip > $(DISTFILE)
 
 # Build the container image.
-build: export DOCKER_BUILDKIT = 1
 build:
-	docker build $(DOCKER_BUILD_FLAGS) \
+	DOCKER_BUILDKIT=1 docker build $(DOCKER_BUILD_FLAGS) \
 		--tag $(IMAGE_NAME) \
 		--build-arg IMAGE_VERSION="$(IMAGE_VERSION)" \
 		-f Dockerfile . >&2

@@ -56,12 +56,10 @@ COPY --from=builder /opt/bash /opt/bin/
 RUN rm -f /etc/motd /etc/issue
 ADD --chown=root:root motd /etc/
 
-ADD start_admin_sshd.sh /usr/sbin/
+ADD --chmod=755 start_admin_sshd.sh /usr/sbin/
 ADD ./sshd_config /etc/ssh/
-ADD ./sheltie /usr/bin/
+ADD --chmod=755 ./sheltie /usr/bin/
 
-RUN chmod +x /usr/sbin/start_admin_sshd.sh
-RUN chmod +x /usr/bin/sheltie
 RUN groupadd -g 274 api
 
 CMD ["/usr/sbin/start_admin_sshd.sh"]

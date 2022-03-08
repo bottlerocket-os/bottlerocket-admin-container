@@ -54,11 +54,11 @@ RUN yum update -y \
 COPY --from=builder /opt/bash /opt/bin/
 
 RUN rm -f /etc/motd /etc/issue
-ADD --chown=root:root motd /etc/
+COPY --chown=root:root motd /etc/
 
-ADD --chmod=755 start_admin_sshd.sh /usr/sbin/
-ADD ./sshd_config /etc/ssh/
-ADD --chmod=755 ./sheltie /usr/bin/
+COPY --chmod=755 start_admin_sshd.sh /usr/sbin/
+COPY ./sshd_config /etc/ssh/
+COPY --chmod=755 ./sheltie /usr/bin/
 
 RUN groupadd -g 274 api
 

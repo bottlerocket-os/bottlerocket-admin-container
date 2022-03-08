@@ -56,6 +56,11 @@ COPY --from=builder /opt/bash /opt/bin/
 RUN rm -f /etc/motd /etc/issue
 COPY --chown=root:root motd /etc/
 
+ARG CUSTOM_PS1='[\u@admin]\$ '
+RUN echo "PS1='$CUSTOM_PS1'" > "/etc/profile.d/bottlerocket-ps1.sh" \
+    && echo "PS1='$CUSTOM_PS1'" >> "/root/.bashrc" \
+    && echo "cat /etc/motd" >> "/root/.bashrc"
+
 COPY --chmod=755 start_admin_sshd.sh /usr/sbin/
 COPY ./sshd_config /etc/ssh/
 COPY --chmod=755 ./sheltie /usr/bin/

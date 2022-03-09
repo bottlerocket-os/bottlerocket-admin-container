@@ -1,5 +1,4 @@
-ARG DOCKER_ARCH
-FROM $DOCKER_ARCH/amazonlinux:2 as builder
+FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
@@ -41,7 +40,7 @@ RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
 RUN make -j`nproc`
 RUN cp bash /opt/bash
 
-FROM $DOCKER_ARCH/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG IMAGE_VERSION
 # Make the container image version a mandatory build argument
@@ -55,14 +54,17 @@ RUN yum update -y \
 COPY --from=builder /opt/bash /opt/bin/
 
 RUN rm -f /etc/motd /etc/issue
-ADD --chown=root:root motd /etc/
+COPY --chown=root:root motd /etc/
 
-ADD start_admin_sshd.sh /usr/sbin/
-ADD ./sshd_config /etc/ssh/
-ADD ./sheltie /usr/bin/
+ARG CUSTOM_PS1='[\u@admin]\$ '
+RUN echo "PS1='$CUSTOM_PS1'" > "/etc/profile.d/bottlerocket-ps1.sh" \
+    && echo "PS1='$CUSTOM_PS1'" >> "/root/.bashrc" \
+    && echo "cat /etc/motd" >> "/root/.bashrc"
 
-RUN chmod +x /usr/sbin/start_admin_sshd.sh
-RUN chmod +x /usr/bin/sheltie
+COPY --chmod=755 start_admin_sshd.sh /usr/sbin/
+COPY ./sshd_config /etc/ssh/
+COPY --chmod=755 ./sheltie /usr/bin/
+
 RUN groupadd -g 274 api
 
 CMD ["/usr/sbin/start_admin_sshd.sh"]

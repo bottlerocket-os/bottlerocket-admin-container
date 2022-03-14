@@ -3,8 +3,7 @@ RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
 ARG musl_version=1.2.2
-ARG bash_version=5.0
-ARG bash_patch_level=18
+ARG bash_version=5.1.16
 
 WORKDIR /opt/build
 COPY ./sdk-fetch ./
@@ -29,9 +28,6 @@ RUN \
   rm bash-${bash_version}.tar.gz hashes
 
 WORKDIR /opt/build/bash-${bash_version}
-RUN for patch_level in $(seq ${bash_patch_level}); do \
-        patch -p0 < /opt/build/bash${bash_version//.}-$(printf '%03d' $patch_level); \
-    done
 RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
     ./configure \
         --enable-static-link \
@@ -39,6 +35,8 @@ RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
     || { cat config.log; exit 1; }
 RUN make -j`nproc`
 RUN cp bash /opt/bash
+RUN mkdir -p /usr/share/licenses/bash && \
+    cp -p COPYING /usr/share/licenses/bash
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
@@ -52,6 +50,7 @@ RUN yum update -y \
     && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/
+COPY --from=builder /usr/share/licenses/bash /usr/share/licenses/bash
 
 RUN rm -f /etc/motd /etc/issue
 COPY --chown=root:root motd /etc/

@@ -1,3 +1,13 @@
+# 0.8.0
+
+* Update bash to 5.1.16. ([#55])
+* Add some art to MOTD. ([#53])
+* Switch to ECR Public, fix multi-arch builds, and more. ([#54])
+
+[#53]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/53
+[#54]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/54
+[#55]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/55
+
 # 0.7.4
 
 * Rebuilt to get the latest AL2 updates. ([#52])

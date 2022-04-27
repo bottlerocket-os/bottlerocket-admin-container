@@ -2,6 +2,7 @@
 
 This is the default admin container for [Bottlerocket](https://github.com/bottlerocket-os/bottlerocket).
 The admin container has an SSH server that lets you log in as ec2-user using your EC2-registered SSH key.
+It also runs agetty services for serial console devices to allow console access.
 It runs outside of Bottlerocket's container orchestrator in a separate instance of containerd.
 
 The admin container is disabled by default in Bottlerocket.
@@ -89,6 +90,23 @@ By default, the admin container's local user will be `ec2-user`. If you would li
     "authorized-keys...",
   }
 }
+```
+
+For logging in via serial console, you can specify a password for the primary user like so:
+
+```
+{
+  "user": "bottlerocket",
+  "password-hash": "$y$jFT$NER...",
+  "ssh": {
+    "authorized-keys...",
+  }
+}
+```
+
+Where the password-hash can be generated from:
+```bash
+mkpasswd -m yescrypt -R 11 <desired password>
 ```
 
 Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).

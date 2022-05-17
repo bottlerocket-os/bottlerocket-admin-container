@@ -111,7 +111,11 @@ enable_systemd_services() {
 # Create local user
 echo "${LOCAL_USER} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${LOCAL_USER}"
 chmod 440 "/etc/sudoers.d/${LOCAL_USER}"
-useradd -m -G users,api "${LOCAL_USER}"
+# Skip user creation if the user already exists
+if ! id -u "${LOCAL_USER}" &>/dev/null; then
+  useradd -m "${LOCAL_USER}"
+fi
+usermod -G users,api "${LOCAL_USER}"
 if [[ -z "${PASSWORD_HASH}" ]]; then
   usermod -L "${LOCAL_USER}"
 else

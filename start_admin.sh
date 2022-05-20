@@ -10,6 +10,11 @@ declare -r PERSISTENT_STORAGE_BASE_DIR="/.bottlerocket/host-containers/current"
 declare -r SSH_HOST_KEY_DIR="${PERSISTENT_STORAGE_BASE_DIR}/etc/ssh"
 declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
 
+if [ ! -s "${USER_DATA}" ]; then
+  log "Admin host-container user-data is empty, going to sleep forever"
+  exec sleep infinity
+fi
+
 # Fetch user from user-data json (if any). Default to 'ec2-user' if null or invalid.
 if ! LOCAL_USER=$(jq -e -r '.["user"] // "ec2-user"' "${USER_DATA}" 2>/dev/null) \
 || [[ ! "${LOCAL_USER}" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]; then

@@ -1,0 +1,22 @@
+[Unit]
+Description=Serial Getty on %I
+DefaultDependencies=no
+
+[Service]
+Environment=TERM=xterm-256color
+ExecStart=-/sbin/agetty -o '-- \\u' --keep-baud 115200,57600,38400,9600 - ${TERM}
+Type=idle
+Restart=always
+RestartSec=0
+UtmpIdentifier=%I
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/.bottlerocket/rootfs/dev/%I
+TTYReset=yes
+TTYVHangup=yes
+KillMode=process
+IgnoreSIGPIPE=no
+SendSIGHUP=yes
+
+[Install]
+WantedBy=admin.target

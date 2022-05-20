@@ -10,11 +10,21 @@ declare -r PERSISTENT_STORAGE_BASE_DIR="/.bottlerocket/host-containers/current"
 declare -r SSH_HOST_KEY_DIR="${PERSISTENT_STORAGE_BASE_DIR}/etc/ssh"
 declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
 
+if [ ! -s "${USER_DATA}" ]; then
+  log "Admin host-container user-data is empty, going to sleep forever"
+  exec sleep infinity
+fi
+
 # Fetch user from user-data json (if any). Default to 'ec2-user' if null or invalid.
 if ! LOCAL_USER=$(jq -e -r '.["user"] // "ec2-user"' "${USER_DATA}" 2>/dev/null) \
 || [[ ! "${LOCAL_USER}" =~ ^[a-z_][a-z0-9_-]{0,31}$ ]]; then
   log "Failed to set user from user-data. Proceeding with 'ec2-user'."
   LOCAL_USER="ec2-user"
+fi
+
+# Fetch password-hash for serial console access.
+if ! PASSWORD_HASH=$(jq -r '.["password-hash"] // ""' "${USER_DATA}" 2>/dev/null); then
+  PASSWORD_HASH=""
 fi
 
 declare -r USER_SSH_DIR="/home/${LOCAL_USER}/.ssh"
@@ -23,7 +33,7 @@ declare -r SSHD_CONFIG_FILE="${SSHD_CONFIG_DIR}/sshd_config"
 
 # This is a counter used to verify at least
 # one of the methods below is available.
-declare -i available_auth_methods=0
+declare -i available_ssh_methods=0
 
 get_user_data_keys() {
     # Extract the keys from user-data json
@@ -69,34 +79,77 @@ EOF
   chmod 644 "${proxy_profile}"
 }
 
+# Set up agetty services for serial console access and the sshd daemon service
+enable_systemd_services() {
+  # Grab `console=` parameters from the kernel command line.
+  CONSOLES=()
+  for opt in $(cat /proc/cmdline) ; do
+     optarg="$(expr "${opt}" : '[^=]*=\(.*\)' 2>/dev/null ||:)"
+     optarg="${optarg%\"}"
+     optarg="${optarg#\"}"
+     case "${opt}" in
+        console=*) CONSOLES+=("${optarg%,*}") ;;
+     esac
+  done
+
+  HOST_DEVTMPFS="/.bottlerocket/rootfs/dev"
+  for console in "${CONSOLES[@]}" ; do
+     # Skip devices that don't exist.
+     [ -c "${HOST_DEVTMPFS}/${console}" ] || continue
+
+     # Otherwise instantiate a service from the template unit. This is normally
+     # done by `systemd-getty-generator`, but that skips over ordinary devices
+     # when run inside a container.
+     case "${console}" in
+        ttyS*|ttyAMA*|ttyUSB*)
+           systemctl --user enable "serial-getty@${console}.service"
+           ;;
+        tty*)
+           systemctl --user enable "getty@${console}.service"
+           ;;
+     esac
+  done
+  # Enable the SSH daemon service unit so we can run it in the background
+  systemctl --user enable "sshd.service"
+}
+
 # Create local user
 echo "${LOCAL_USER} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${LOCAL_USER}"
 chmod 440 "/etc/sudoers.d/${LOCAL_USER}"
-useradd -m -G users,api "${LOCAL_USER}"
+# Skip user creation if the user already exists
+if ! id -u "${LOCAL_USER}" &>/dev/null; then
+  useradd -m "${LOCAL_USER}"
+fi
+usermod -G users,api "${LOCAL_USER}"
+if [[ -z "${PASSWORD_HASH}" ]]; then
+  usermod -L "${LOCAL_USER}"
+else
+  usermod -p "${PASSWORD_HASH}" "${LOCAL_USER}"
+fi
 mkdir -p "${USER_SSH_DIR}"
 chmod 700 "${USER_SSH_DIR}"
 
-# Populate authorized_keys with all the authorized keys found in user-data
+# Populate SSH authorized_keys with all the authorized keys found in user-data
 if authorized_keys=$(get_user_data_keys "authorized-keys") \
 || authorized_keys=$(get_user_data_keys "authorized_keys"); then
   ssh_authorized_keys="${USER_SSH_DIR}/authorized_keys"
   touch "${ssh_authorized_keys}"
   chmod 600 "${ssh_authorized_keys}"
   echo "${authorized_keys}" > "${ssh_authorized_keys}"
-  ((++available_auth_methods))
+  ((++available_ssh_methods))
 fi
 
-# Populate trusted_user_ca_keys with all the trusted ca keys found in user-data
+# Populate SSH trusted_user_ca_keys with all the trusted ca keys found in user-data
 if trusted_user_ca_keys=$(get_user_data_keys "trusted-user-ca-keys") \
 || trusted_user_ca_keys=$(get_user_data_keys "trusted_user_ca_keys"); then
   ssh_trusted_user_ca_keys="/etc/ssh/trusted_user_ca_keys.pub"
   touch "${ssh_trusted_user_ca_keys}"
   chmod 600 "${ssh_trusted_user_ca_keys}"
   echo "${trusted_user_ca_keys}" > "${ssh_trusted_user_ca_keys}"
-  ((++available_auth_methods))
+  ((++available_ssh_methods))
 fi
 
-# Set additional configurations
+# Set additional SSH configurations
 declare authorized_keys_command
 if authorized_keys_command=$(jq -e -r '.["ssh"]["authorized-keys-command"]?' "${USER_DATA}"); then
   echo "AuthorizedKeysCommand ${authorized_keys_command}" >> "${SSHD_CONFIG_FILE}"
@@ -122,15 +175,14 @@ declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \
 && [[ $authorized_keys_command_user == "ec2-instance-connect" ]]; then
   use_eic=1
-  ((++available_auth_methods))
+  ((++available_ssh_methods))
 fi
 
 chown -R "${LOCAL_USER}:" "${USER_SSH_DIR}"
 
-# If there were no successful auth methods, then users cannot authenticate
-if [[ "${available_auth_methods}" -eq 0 ]]; then
-  user_data_condensed=$(jq -e -c . "${USER_DATA}" 2>/dev/null || cat "${USER_DATA}")
-  log "Failed to configure ssh authentication with user-data: ${user_data_condensed}"
+# If there were no available SSH auth methods, then users cannot connect via the SSH daemon
+if [[ "${available_ssh_methods}" -eq 0 ]]; then
+  log "No SSH authentication methods available in admin container user-data"
 fi
 
 # Generate the server keys
@@ -166,5 +218,9 @@ fi
 
 install_proxy_profile
 
-# Start a single sshd process in the foreground
-exec /usr/sbin/sshd -e -D
+enable_systemd_services
+
+# Persuade systemd that it's OK to run as a user manager.
+export XDG_RUNTIME_DIR="/run/user/${UID}"
+mkdir -p /run/systemd/system "${XDG_RUNTIME_DIR}"
+exec /usr/lib/systemd/systemd --user --unit=admin.target

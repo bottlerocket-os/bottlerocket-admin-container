@@ -46,7 +46,7 @@ RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum update -y \
-    && yum install -y openssh-server sudo util-linux procps-ng jq openssl ec2-instance-connect \
+    && yum install -y openssh-server sudo shadow-utils util-linux procps-ng jq openssl ec2-instance-connect \
     && yum clean all
 
 COPY --from=builder /opt/bash /opt/bin/
@@ -55,16 +55,18 @@ COPY --from=builder /usr/share/licenses/bash /usr/share/licenses/bash
 RUN rm -f /etc/motd /etc/issue
 COPY --chown=root:root motd /etc/
 
+COPY --chown=root:root units /etc/systemd/user/
+
 ARG CUSTOM_PS1='[\u@admin]\$ '
 RUN echo "PS1='$CUSTOM_PS1'" > "/etc/profile.d/bottlerocket-ps1.sh" \
     && echo "PS1='$CUSTOM_PS1'" >> "/root/.bashrc" \
     && echo "cat /etc/motd" >> "/root/.bashrc"
 
-COPY --chmod=755 start_admin_sshd.sh /usr/sbin/
+COPY --chmod=755 start_admin.sh /usr/sbin/
 COPY ./sshd_config /etc/ssh/
 COPY --chmod=755 ./sheltie /usr/bin/
 
 RUN groupadd -g 274 api
 
-CMD ["/usr/sbin/start_admin_sshd.sh"]
+CMD ["/usr/sbin/start_admin.sh"]
 ENTRYPOINT ["/bin/bash", "-c"]

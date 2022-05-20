@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenSSH server daemon
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/sysconfig/sshd
+ExecStart=/usr/sbin/sshd -e -D $OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartSec=42s
+
+[Install]
+WantedBy=admin.target

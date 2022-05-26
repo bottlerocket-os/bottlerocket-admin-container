@@ -1,3 +1,11 @@
+# 0.9.0
+
+* Add support for serial console access. ([#59])
+* Symlink logger with true. ([#60])
+
+[#59]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/59
+[#60]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/60
+
 # 0.8.0
 
 * Update bash to 5.1.16. ([#55])

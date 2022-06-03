@@ -170,7 +170,7 @@ if kex_algorithms=$(jq -r -e -c '.["ssh"]["key-exchange-algorithms"]? | join(","
   echo "KexAlgorithms ${kex_algorithms}" >> "${SSHD_CONFIG_FILE}"
 fi
 
-# Check the configurations are for EC2 instance connect
+# Check the configurations are for EC2 Instance Connect
 declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \
 && [[ $authorized_keys_command_user == "ec2-instance-connect" ]]; then

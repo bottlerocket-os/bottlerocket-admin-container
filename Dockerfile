@@ -68,5 +68,9 @@ COPY --chmod=755 ./sheltie /usr/bin/
 
 RUN groupadd -g 274 api
 
+# Reduces issues related to logger and our implementation of systemd. This is
+# necessary for scripts logging to logger, such as in EC2 Instance Connect.
+RUN ln -sf /usr/bin/true /usr/bin/logger
+
 CMD ["/usr/sbin/start_admin.sh"]
 ENTRYPOINT ["/bin/bash", "-c"]

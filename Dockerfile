@@ -2,7 +2,7 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder
 RUN yum group install -y "Development Tools"
 RUN yum install -y glibc-static
 
-ARG musl_version=1.2.2
+ARG musl_version=1.2.3
 ARG bash_version=5.1.16
 
 WORKDIR /opt/build

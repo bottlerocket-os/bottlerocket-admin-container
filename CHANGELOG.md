@@ -1,3 +1,9 @@
+# 0.9.1
+
+* Update to the latest musl release. ([#67])
+
+[#67]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/67
+
 # 0.9.0
 
 * Add support for serial console access. ([#59])

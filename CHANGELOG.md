@@ -1,3 +1,9 @@
+# 0.9.2
+
+* Remove `/etc/config/selinux` from image. ([#69])
+
+[#69]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/69
+
 # 0.9.1
 
 * Update to the latest musl release. ([#67])

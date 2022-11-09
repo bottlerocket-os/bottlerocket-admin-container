@@ -208,14 +208,6 @@ for key_alg in rsa ecdsa ed25519; do
   fi
 done
 
-
-if [[ ${use_eic} == 1 ]] && [[ ! -f "${SSH_HOST_KEY_DIR}/harvest" ]]; then
-  if ! /opt/aws/bin/eic_harvest_hostkeys; then
-    log "Failure to harvest hostkeys for EIC"
-  fi
-  touch "${SSH_HOST_KEY_DIR}/harvest"
-fi
-
 install_proxy_profile
 
 enable_systemd_services

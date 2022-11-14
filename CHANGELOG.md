@@ -1,3 +1,9 @@
+# 0.9.3
+
+* Remove check for EC2 Instance Connect hostkey harvesting. ([#71])
+
+[#71]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/71
+
 # 0.9.2
 
 * Remove `/etc/config/selinux` from image. ([#69])

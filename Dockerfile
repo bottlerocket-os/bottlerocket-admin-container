@@ -3,6 +3,7 @@
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder-base
 RUN yum group install -y "Development Tools"
+RUN useradd builder
 
 
 ################################################################################
@@ -49,6 +50,36 @@ RUN mkdir -p /usr/share/licenses/bash && \
 
 
 ################################################################################
+# Rebuild of Amazon Linux 2's systemd v219 with downstream patches
+
+FROM builder-base AS builder-systemd
+RUN yum install -y yum-utils rpm-build
+RUN yum-builddep -y systemd
+
+USER builder
+WORKDIR /home/builder
+RUN yumdownloader --source systemd
+RUN rpm -Uv systemd-219-*.src.rpm
+
+WORKDIR /home/builder/rpmbuild/SOURCES
+COPY systemd-patches/*.patch ./
+
+WORKDIR /home/builder/rpmbuild/SPECS
+# Recreate the spec file from three parts: everything up until the last upstream
+# patch, downstream patches, everything else.
+RUN last_patch=$(awk '/^Patch[0-9]+/ { line = NR } END { print line }' systemd.spec); \
+    head -n${last_patch} systemd.spec >systemd.mod.spec; \
+    { \
+        echo ;\
+        echo '# Bottlerocket Patches'; \
+        echo ; \
+    } >>systemd.mod.spec; \
+    tail -n+$((last_patch + 1)) systemd.spec >>systemd.mod.spec; \
+    mv systemd.mod.spec systemd.spec
+RUN rpmbuild --bb systemd.spec
+
+
+################################################################################
 # Actual admin container image
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
@@ -58,8 +89,15 @@ ARG IMAGE_VERSION
 RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-RUN yum update -y \
-    && yum install -y
+# Install the custom systemd build in the same transaction as all original
+# packages to save space. For example, openssh-server pulls in systemd. This
+# dependency is best satisfied by the downstream build. Reinstalling it later
+# would result in also carrying around the original systemd in the final image
+# where it would remain forever hidden and unused in a lower layer.
+RUN --mount=type=bind,from=builder-systemd,source=/home/builder/rpmbuild/RPMS,target=/tmp/systemd-rpms \
+    yum update -y \
+    && yum install -y \
+        /tmp/systemd-rpms/*/systemd-{219,libs}*.rpm \
         ec2-instance-connect \
         jq \
         openssh-server \
@@ -69,6 +107,7 @@ RUN yum update -y \
         sudo \
         util-linux \
     && yum clean all
+
 # Delete SELinux config file to prevent relabeling with contexts provided by the container's image
 RUN rm -rf /etc/selinux/config
 

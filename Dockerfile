@@ -1,5 +1,14 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder
+################################################################################
+# Base image for all builds
+
+FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder-base
 RUN yum group install -y "Development Tools"
+
+
+################################################################################
+# Statically linked, more recent version of bash
+
+FROM builder-base as builder-static
 RUN yum install -y glibc-static
 
 ARG musl_version=1.2.3
@@ -38,6 +47,10 @@ RUN cp bash /opt/bash
 RUN mkdir -p /usr/share/licenses/bash && \
     cp -p COPYING /usr/share/licenses/bash
 
+
+################################################################################
+# Actual admin container image
+
 FROM public.ecr.aws/amazonlinux/amazonlinux:2
 
 ARG IMAGE_VERSION
@@ -51,8 +64,8 @@ RUN yum update -y \
 # Delete SELinux config file to prevent relabeling with contexts provided by the container's image
 RUN rm -rf /etc/selinux/config
 
-COPY --from=builder /opt/bash /opt/bin/
-COPY --from=builder /usr/share/licenses/bash /usr/share/licenses/bash
+COPY --from=builder-static /opt/bash /opt/bin/
+COPY --from=builder-static /usr/share/licenses/bash /usr/share/licenses/bash
 
 RUN rm -f /etc/motd /etc/issue
 COPY --chown=root:root motd /etc/

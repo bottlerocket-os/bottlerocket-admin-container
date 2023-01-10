@@ -1,0 +1,75 @@
+From 1b69dcdee96284abc05072d962e99436d00042f2 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Wed, 23 Nov 2022 13:06:49 +0000
+Subject: [PATCH 9500/9501] cgroup-util: extract cgroup hierarchy base path
+ into variable
+
+Just extracting the /sys/fs/cgroup path as the cgroup hierarchy base into its
+own definition to ease further changes. No functional changes in this commit.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ src/shared/cgroup-util.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/src/shared/cgroup-util.c b/src/shared/cgroup-util.c
+index f1bed8a..b055dd8 100644
+--- a/src/shared/cgroup-util.c
++++ b/src/shared/cgroup-util.c
+@@ -41,6 +41,8 @@
+ #include "special.h"
+ #include "mkdir.h"
+ 
++static char *cg_hierarchy_base = "/sys/fs/cgroup";
++
+ int cg_enumerate_processes(const char *controller, const char *path, FILE **_f) {
+         _cleanup_free_ char *fs = NULL;
+         FILE *f;
+@@ -453,13 +455,13 @@ static int join_path(const char *controller, const char *path, const char *suffi
+ 
+         if (!isempty(controller)) {
+                 if (!isempty(path) && !isempty(suffix))
+-                        t = strjoin("/sys/fs/cgroup/", controller, "/", path, "/", suffix, NULL);
++                        t = strjoin(cg_hierarchy_base, "/", controller, "/", path, "/", suffix, NULL);
+                 else if (!isempty(path))
+-                        t = strjoin("/sys/fs/cgroup/", controller, "/", path, NULL);
++                        t = strjoin(cg_hierarchy_base, "/", controller, "/", path, NULL);
+                 else if (!isempty(suffix))
+-                        t = strjoin("/sys/fs/cgroup/", controller, "/", suffix, NULL);
++                        t = strjoin(cg_hierarchy_base, "/", controller, "/", suffix, NULL);
+                 else
+-                        t = strappend("/sys/fs/cgroup/", controller);
++                        t = strjoin(cg_hierarchy_base, "/", controller, NULL);
+         } else {
+                 if (!isempty(path) && !isempty(suffix))
+                         t = strjoin(path, "/", suffix, NULL);
+@@ -488,7 +490,7 @@ int cg_get_path(const char *controller, const char *path, const char *suffix, ch
+         if (_unlikely_(!good)) {
+                 int r;
+ 
+-                r = path_is_mount_point("/sys/fs/cgroup", false);
++                r = path_is_mount_point(cg_hierarchy_base, false);
+                 if (r < 0)
+                         return r;
+                 if (r == 0)
+@@ -512,7 +514,7 @@ static int check_hierarchy(const char *p) {
+                 return 0;
+ 
+         /* Check if this controller actually really exists */
+-        cc = strjoina("/sys/fs/cgroup/", p);
++        cc = strjoina(cg_hierarchy_base, "/", p);
+         if (laccess(cc, F_OK) < 0)
+                 return -errno;
+ 
+@@ -1043,7 +1045,7 @@ int cg_mangle_path(const char *path, char **result) {
+         assert(result);
+ 
+         /* First, check if it already is a filesystem path */
+-        if (path_startswith(path, "/sys/fs/cgroup")) {
++        if (path_startswith(path, cg_hierarchy_base)) {
+ 
+                 t = strdup(path);
+                 if (!t)
+-- 
+2.36.1
+

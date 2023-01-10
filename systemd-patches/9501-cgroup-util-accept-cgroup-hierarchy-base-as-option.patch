@@ -1,0 +1,120 @@
+From 48de958400d2acc96dc3268c287782b33d7ae883 Mon Sep 17 00:00:00 2001
+From: Markus Boehme <markubo@amazon.com>
+Date: Wed, 4 Jan 2023 15:33:10 +0000
+Subject: [PATCH 9501/9501] cgroup-util: accept cgroup hierarchy base as option
+
+On an ordinary system, the cgroup hierarchy is expected to be located at
+`/sys/fs/cgroup`. Introduce the `--cgroup-base` option to `systemd` to
+make it look for the cgroup hierarchy at another location.
+
+The cgroup base may only be moved once and, preferably only during
+initialization while parsing the command line arguments to avoid
+confusion.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ src/core/main.c          | 14 +++++++++++++-
+ src/shared/cgroup-util.c | 26 ++++++++++++++++++++++++++
+ src/shared/cgroup-util.h |  2 ++
+ 3 files changed, 41 insertions(+), 1 deletion(-)
+
+diff --git a/src/core/main.c b/src/core/main.c
+index 2d70ed0..ce0314a 100644
+--- a/src/core/main.c
++++ b/src/core/main.c
+@@ -79,6 +79,8 @@
+ #include "kmod-setup.h"
+ #include "emergency-action.h"
+ 
++#include "cgroup-util.h"
++
+ static enum {
+         ACTION_RUN,
+         ACTION_HELP,
+@@ -680,7 +682,8 @@ static int parse_argv(int argc, char *argv[]) {
+                 ARG_DESERIALIZE,
+                 ARG_SWITCHED_ROOT,
+                 ARG_DEFAULT_STD_OUTPUT,
+-                ARG_DEFAULT_STD_ERROR
++                ARG_DEFAULT_STD_ERROR,
++                ARG_CGROUP_BASE,
+         };
+ 
+         static const struct option options[] = {
+@@ -704,6 +707,7 @@ static int parse_argv(int argc, char *argv[]) {
+                 { "switched-root",            no_argument,       NULL, ARG_SWITCHED_ROOT            },
+                 { "default-standard-output",  required_argument, NULL, ARG_DEFAULT_STD_OUTPUT,      },
+                 { "default-standard-error",   required_argument, NULL, ARG_DEFAULT_STD_ERROR,       },
++                { "cgroup-base",              required_argument, NULL, ARG_CGROUP_BASE,             },
+                 {}
+         };
+ 
+@@ -880,6 +884,14 @@ static int parse_argv(int argc, char *argv[]) {
+                         arg_switched_root = true;
+                         break;
+ 
++                case ARG_CGROUP_BASE:
++                        r = cg_set_hierarchy_base(optarg);
++                        if (r < 0) {
++                                log_error_errno(r, "Failed to use cgroup hierarchy base to %s: %m", optarg);
++                                return r;
++                        }
++                        break;
++
+                 case 'h':
+                         arg_action = ACTION_HELP;
+                         if (arg_no_pager < 0)
+diff --git a/src/shared/cgroup-util.c b/src/shared/cgroup-util.c
+index b055dd8..e9f8d24 100644
+--- a/src/shared/cgroup-util.c
++++ b/src/shared/cgroup-util.c
+@@ -40,6 +40,7 @@
+ #include "fileio.h"
+ #include "special.h"
+ #include "mkdir.h"
++#include "refcnt.h"
+ 
+ static char *cg_hierarchy_base = "/sys/fs/cgroup";
+ 
+@@ -1839,3 +1840,28 @@ int cg_blkio_weight_parse(const char *s, uint64_t *ret) {
+         *ret = u;
+         return 0;
+ }
++
++int cg_set_hierarchy_base(const char *path) {
++        static RefCount base_set = REFCNT_INIT;
++        char *b;
++        int r;
++
++        assert(path);
++
++        r = is_dir(path, true);
++        if (r <= 0)
++                return r ? r : -ENOTDIR;
++
++        b = strdup(path);
++        if (!b)
++                return -ENOMEM;
++
++        if (REFCNT_INC(base_set) > 2) {
++                free(b);
++                return -EINVAL;
++        }
++
++        cg_hierarchy_base = b;
++
++        return 0;
++}
+diff --git a/src/shared/cgroup-util.h b/src/shared/cgroup-util.h
+index b6f28c5..07e6d7e 100644
+--- a/src/shared/cgroup-util.h
++++ b/src/shared/cgroup-util.h
+@@ -163,3 +163,5 @@ int cg_kernel_controllers(Set *controllers);
+ 
+ int cg_cpu_shares_parse(const char *s, uint64_t *ret);
+ int cg_blkio_weight_parse(const char *s, uint64_t *ret);
++
++int cg_set_hierarchy_base(const char *path);
+-- 
+2.36.1
+

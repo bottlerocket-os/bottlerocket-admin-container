@@ -1,3 +1,7 @@
+# 0.9.4
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.9.3
 
 * Remove check for EC2 Instance Connect hostkey harvesting. ([#71])

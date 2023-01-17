@@ -1,9 +1,10 @@
 # Bottlerocket Admin Container
 
-This is the default admin container for [Bottlerocket](https://github.com/bottlerocket-os/bottlerocket).
-The admin container has an SSH server that lets you log in as ec2-user using your EC2-registered SSH key.
-It also runs agetty services for serial console devices to allow console access.
-It runs outside of Bottlerocket's container orchestrator in a separate instance of containerd.
+This is the admin container for troubleshooting the [Bottlerocket](https://github.com/bottlerocket-os/bottlerocket) operating system.
+It runs outside of Bottlerocket's container orchestrator in a separate instance of `containerd`.
+The container hosts an SSH server to allow public key SSH access, as well as `agetty` services for serial console devices to allow console access.
+You can also connect to the admin container via the control container by running `enter-admin-container`.
+Unless otherwise specified through user-data, the default user is **ec2-user**.
 
 The admin container is disabled by default in Bottlerocket.
 For more information about how the admin container fits into the Bottlerocket operating system, please see the [Bottlerocket documentation](https://github.com/bottlerocket-os/bottlerocket/blob/develop/README.md#admin-container).
@@ -22,7 +23,7 @@ If user-data is populated then Bottlerocket will not fetch from IMDS at all, but
 
 To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `/etc/ssh/trusted_user_ca_keys.pub` you will want to generate a JSON-structure like this:
 
-```
+```json
 {
   "ssh": {
     "authorized-keys": [
@@ -36,7 +37,8 @@ To use custom public keys for `.ssh/authorized_keys` and/or custom CA keys for `
 ```
 
 If you want to access to the admin container using [EC2 instance connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Connect-using-EC2-Instance-Connect.html), set `authorized-keys-command` and `authorized-keys-command-user` as follows:
-```
+
+```json
 {
   "ssh": {
     "authorized-keys-command": "/opt/aws/bin/eic_run_authorized_keys %u %f",
@@ -47,7 +49,7 @@ If you want to access to the admin container using [EC2 instance connect](https:
 
 To change allowed SSH ciphers to a specific set, you can add a ciphers section:
 
-```
+```json
 {
   "ssh": {
     "authorized-keys...",
@@ -65,7 +67,8 @@ To change allowed SSH ciphers to a specific set, you can add a ciphers section:
 
 To change allowed key exchange algorithms to a specific set, you can add a
 `key-exchange-algorithms` section:
-```
+
+```json
 {
   "ssh": {
     "authorized-keys...",
@@ -83,7 +86,7 @@ To change allowed key exchange algorithms to a specific set, you can add a
 
 By default, the admin container's local user will be `ec2-user`. If you would like to change this, you can set the user value like so:
 
-```
+```json
 {
   "user": "bottlerocket",
   "ssh": {
@@ -94,7 +97,7 @@ By default, the admin container's local user will be `ec2-user`. If you would li
 
 For logging in via serial console, you can specify a password for the primary user like so:
 
-```
+```json
 {
   "user": "bottlerocket",
   "password-hash": "$y$jFT$NER...",
@@ -105,13 +108,14 @@ For logging in via serial console, you can specify a password for the primary us
 ```
 
 Where the password-hash can be generated from:
+
 ```bash
 mkpasswd -m yescrypt -R 11 <desired password>
 ```
 
 Once you've created your JSON, you'll need to base64-encode it and set it as the value of the admin host container's user-data setting in your [instance user data toml](https://github.com/bottlerocket-os/bottlerocket#using-user-data).
 
-```
+```toml
 [settings.host-containers.admin]
 # ex: echo '{"ssh":{"authorized-keys":[]}}' | base64
 user-data = "eyJzc2giOnsiYXV0aG9yaXplZC1rZXlzIjpbXX19Cg=="

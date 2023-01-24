@@ -59,7 +59,15 @@ RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN yum update -y \
-    && yum install -y openssh-server sudo shadow-utils util-linux procps-ng jq openssl ec2-instance-connect \
+    && yum install -y
+        ec2-instance-connect \
+        jq \
+        openssh-server \
+        openssl \
+        procps-ng \
+        shadow-utils \
+        sudo \
+        util-linux \
     && yum clean all
 # Delete SELinux config file to prevent relabeling with contexts provided by the container's image
 RUN rm -rf /etc/selinux/config

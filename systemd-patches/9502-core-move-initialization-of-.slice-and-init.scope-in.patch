@@ -1,0 +1,75 @@
+From 0b9c1623c2d51b0e1e51ec9cdbb89eee03118102 Mon Sep 17 00:00:00 2001
+From: Lennart Poettering <lennart@poettering.net>
+Date: Mon, 24 Oct 2016 20:37:54 +0200
+Subject: [PATCH] core: move initialization of -.slice and init.scope into the
+ unit_load() callbacks
+
+Previously, we'd synthesize the root slice unit and the init scope unit in the
+enumerator callbacks for the unit type. This is problematic if either of them
+is already referenced from a unit that is loaded as result of another unit
+type's enumerator logic.
+
+Let's clean this up and simply create the two objects from the enumerator
+callbacks, if they are not around yet. Do the actual filling in of the settings
+from the unit_load() callbacks, to match how other units are loaded.
+
+Fixes: #4322
+
+(cherry picked from commit 8e4e851f1ddc98daf69b68998afc5a096ea17893)
+
+Only retain the logic to synthesize the root slice unit. The init scope
+does not exist yet in v219 and only was introduced with the work to
+support the unified cgroup hierarchy in v226.
+
+Signed-off-by: Markus Boehme <markubo@amazon.com>
+---
+ src/core/slice.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/src/core/slice.c b/src/core/slice.c
+index b0769205f6..f533efdd97 100644
+--- a/src/core/slice.c
++++ b/src/core/slice.c
+@@ -129,12 +129,39 @@ static int slice_verify(Slice *s) {
+         return 0;
+ }
+ 
++static int slice_load_root_slice(Unit *u) {
++        assert(u);
++
++        if (!unit_has_name(u, SPECIAL_ROOT_SLICE))
++                return 0;
++
++        u->no_gc = true;
++
++        /* The root slice is a bit special. For example it is always running and cannot be terminated. Because of its
++         * special semantics we synthesize it here, instead of relying on the unit file on disk. */
++
++        u->default_dependencies = false;
++        u->ignore_on_isolate = true;
++        u->refuse_manual_start = true;
++        u->refuse_manual_stop = true;
++
++        if (!u->description)
++                u->description = strdup("Root Slice");
++        if (!u->documentation)
++                u->documentation = strv_new("man:systemd.special(7)", NULL);
++
++        return 1;
++}
++
+ static int slice_load(Unit *u) {
+         Slice *s = SLICE(u);
+         int r;
+ 
+         assert(s);
+ 
++        r = slice_load_root_slice(u);
++        if (r < 0)
++                return r;
+         r = unit_load_fragment_and_dropin_optional(u);
+         if (r < 0)
+                 return r;
+-- 
+2.39.1
+

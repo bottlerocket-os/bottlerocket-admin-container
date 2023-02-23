@@ -72,8 +72,10 @@ RUN last_patch=$(awk '/^Patch[0-9]+/ { line = NR } END { print line }' systemd.s
     { \
         echo ;\
         echo '# Bottlerocket Patches'; \
-        echo 'Patch9501: 9500-cgroup-util-extract-cgroup-hierarchy-base-path-into-.patch'; \
-        echo 'Patch9502: 9501-cgroup-util-accept-cgroup-hierarchy-base-as-option.patch'; \
+        echo 'Patch9500: 9500-cgroup-util-extract-cgroup-hierarchy-base-path-into-.patch'; \
+        echo 'Patch9501: 9501-cgroup-util-accept-cgroup-hierarchy-base-as-option.patch'; \
+        echo 'Patch9502: 9502-core-move-initialization-of-.slice-and-init.scope-in.patch'; \
+        echo 'Patch9503: 9503-core-drop-.slice-from-shipped-units.patch'; \
         echo ; \
     } >>systemd.mod.spec; \
     tail -n+$((last_patch + 1)) systemd.spec >>systemd.mod.spec; \

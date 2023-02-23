@@ -1,3 +1,12 @@
+# 0.10.0
+
+* Add support for running on a host with cgroup v2 (unified cgroup hierarchy) enabled. ([#76])
+* Fix systemd warning about conflicting jobs when the admin container exits. ([#79])
+* Pick up latest AL2 updates.
+
+[#76]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/76
+[#79]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/79
+
 # 0.9.4
 
 * Rebuilt to get the latest AL2 updates.

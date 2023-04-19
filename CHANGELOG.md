@@ -1,3 +1,7 @@
+# 0.10.1
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.10.0
 
 * Add support for running on a host with cgroup v2 (unified cgroup hierarchy) enabled. ([#76])

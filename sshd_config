@@ -19,3 +19,5 @@ PermitRootLogin no
 
 # Configured by user data
 TrustedUserCAKeys /etc/ssh/trusted_user_ca_keys.pub
+
+UseDNS no

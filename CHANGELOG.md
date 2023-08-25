@@ -1,3 +1,10 @@
+# 0.11.0
+
+* Stop unnecessary reverse lookup of incoming SSH connections. ([#85])
+* Pick up latest AL2 updates.
+
+[#85]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/85
+
 # 0.10.2
 
 * Rebuilt to get the latest AL2 updates.

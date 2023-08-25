@@ -1,3 +1,10 @@
+# 0.11.0
+
+* Rebuilt to get the latest AL2 updates.
+* Add sshd config update to stop unnecessary reverse lookups of incoming connections ([#85])
+
+[#85]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/85
+
 # 0.10.2
 
 * Rebuilt to get the latest AL2 updates.

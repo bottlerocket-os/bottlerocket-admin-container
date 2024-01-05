@@ -84,6 +84,31 @@ To change allowed key exchange algorithms to a specific set, you can add a
 }
 ```
 
+To change allowed MACs to a specific set, you can add a `macs` section:
+
+```json
+{
+  "ssh": {
+    "authorized-keys...",
+    "macs": [
+      "hmac-sha2-256",
+      "hmac-sha2-512",
+      "umac-64@openssh.com",
+      "umac-128@openssh.com",
+      "hmac-sha2-256-etm@openssh.com",
+      "hmac-sha2-512-etm@openssh.com",
+      "hmac-md5-etm@openssh.com",
+      "hmac-md5-96-etm@openssh.com",
+      "umac-64-etm@openssh.com",
+      "umac-128-etm@openssh.com"
+    ]
+  }
+}
+```
+
+You can also tweak ciphers, key exchange algorithms and MACs following way (see https://man.openbsd.org/sshd_config for details):
+- If the specified list begins with a ‘+’ character, then the specified entries will be appended to the default set instead of replacing them. If the specified list begins with a ‘-’ character, then the specified entries (including wildcards) will be removed from the default set instead of replacing them. If the specified list begins with a ‘^’ character, then the specified entries will be placed at the head of the default set.
+
 By default, the admin container's local user will be `ec2-user`. If you would like to change this, you can set the user value like so:
 
 ```json

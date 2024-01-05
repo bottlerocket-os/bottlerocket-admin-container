@@ -170,6 +170,11 @@ if kex_algorithms=$(jq -r -e -c '.["ssh"]["key-exchange-algorithms"]? | join(","
   echo "KexAlgorithms ${kex_algorithms}" >> "${SSHD_CONFIG_FILE}"
 fi
 
+# Populate MACs with all the MACs found in user-data
+if macs=$(jq -r -e -c '.["ssh"]["macs"]? | join(",")' "${USER_DATA}" 2>/dev/null); then
+  echo "MACs ${macs}" >> "${SSHD_CONFIG_FILE}"
+fi
+
 # Check the configurations are for EC2 Instance Connect
 declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \

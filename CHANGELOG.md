@@ -1,3 +1,9 @@
+# 0.11.3
+
+* Allow setting MACs in SSHD config. ([#91], **thanks  @mlacko64!**)
+
+[#91]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/91
+
 # 0.11.2
 
 * Rebuilt to get the latest AL2 updates.

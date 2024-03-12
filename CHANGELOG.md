@@ -1,3 +1,7 @@
+# 0.11.6
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.11.5
 
 * Rebuilt to get the latest AL2 updates.

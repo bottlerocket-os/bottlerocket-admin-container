@@ -1,3 +1,9 @@
+# 0.11.16
+* Link Host certificates if available. ([#106])
+* Rebuilt to get the latest AL2 updates.
+
+[#106]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/106
+
 # 0.11.15
 
 * Rebuilt to get the latest AL2 updates.

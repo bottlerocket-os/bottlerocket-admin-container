@@ -1,7 +1,7 @@
 ################################################################################
 # Base image for all builds
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2 as builder-base
+FROM public.ecr.aws/amazonlinux/amazonlinux:2 AS builder-base
 RUN yum group install -y "Development Tools"
 RUN useradd builder
 
@@ -9,7 +9,7 @@ RUN useradd builder
 ################################################################################
 # Statically linked, more recent version of bash
 
-FROM builder-base as builder-static
+FROM builder-base AS builder-static
 RUN yum install -y glibc-static
 
 ARG musl_version=1.2.3

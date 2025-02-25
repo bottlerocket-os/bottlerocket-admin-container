@@ -1,3 +1,7 @@
+# 0.11.17
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.11.16
 * Link Host certificates if available. ([#106])
 * Rebuilt to get the latest AL2 updates.

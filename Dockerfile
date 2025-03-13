@@ -12,7 +12,7 @@ RUN useradd builder
 FROM builder-base AS builder-static
 RUN yum install -y glibc-static
 
-ARG musl_version=1.2.3
+ARG musl_version=1.2.5
 ARG bash_version=5.1.16
 
 WORKDIR /opt/build

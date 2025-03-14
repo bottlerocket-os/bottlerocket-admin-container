@@ -1,3 +1,11 @@
+# 0.11.18
+
+* Bump musl version from 1.2.3 -> 1.2.5. ([#114])
+* Add patches for CVE-2025-26519 in musl. ([#114])
+* Rebuilt to get the latest AL2 updates.
+
+[#114]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/114
+
 # 0.11.17
 
 * Rebuilt to get the latest AL2 updates.

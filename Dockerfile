@@ -12,7 +12,7 @@ RUN useradd builder
 FROM builder-base AS builder-static
 RUN yum install -y glibc-static
 
-ARG musl_version=1.2.3
+ARG musl_version=1.2.5
 ARG bash_version=5.1.16
 
 WORKDIR /opt/build
@@ -20,11 +20,15 @@ COPY ./sdk-fetch ./
 
 WORKDIR /opt/build
 COPY ./hashes/musl ./hashes
+COPY ./patches/musl ./patches
 
 RUN \
   ./sdk-fetch hashes && \
   tar -xf musl-${musl_version}.tar.gz && \
-  rm musl-${musl_version}.tar.gz hashes
+  rm musl-${musl_version}.tar.gz hashes && \
+  cd musl-${musl_version} && \
+  git init . && \
+  git apply --whitespace=nowarn ../patches/*.patch
 
 WORKDIR /opt/build/musl-${musl_version}
 RUN ./configure --enable-static && make -j$(nproc) && make install

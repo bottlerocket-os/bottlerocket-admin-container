@@ -1,3 +1,7 @@
+# 0.11.19
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.11.18
 
 * Bump musl version from 1.2.3 -> 1.2.5. ([#114])

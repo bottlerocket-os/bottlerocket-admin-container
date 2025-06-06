@@ -106,6 +106,17 @@ To change allowed MACs to a specific set, you can add a `macs` section:
 }
 ```
 
+To change the port that the admin container SSH daemon is running on (default is 22), you can add a `port` section:
+
+```json
+{
+  "ssh": {
+    "authorized-keys...",
+    "port": 1234
+  }
+}
+```
+
 You can also tweak ciphers, key exchange algorithms and MACs following way (see https://man.openbsd.org/sshd_config for details):
 - If the specified list begins with a ‘+’ character, then the specified entries will be appended to the default set instead of replacing them. If the specified list begins with a ‘-’ character, then the specified entries (including wildcards) will be removed from the default set instead of replacing them. If the specified list begins with a ‘^’ character, then the specified entries will be placed at the head of the default set.
 

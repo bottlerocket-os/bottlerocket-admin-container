@@ -185,6 +185,11 @@ if macs=$(jq -r -e -c '.["ssh"]["macs"]? | join(",")' "${USER_DATA}" 2>/dev/null
   echo "MACs ${macs}" >> "${SSHD_CONFIG_FILE}"
 fi
 
+# Set custom SSH port if specified in user-data
+if ssh_port=$(jq -r -e '.["ssh"]["port"]?' "${USER_DATA}" 2>/dev/null); then
+  echo "Port ${ssh_port}" >> "${SSHD_CONFIG_FILE}"
+fi
+
 # Check the configurations are for EC2 Instance Connect
 declare -i use_eic=0
 if [[ $authorized_keys_command == /opt/aws/bin/eic_run_authorized_keys* ]] \

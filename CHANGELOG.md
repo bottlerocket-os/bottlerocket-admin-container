@@ -1,3 +1,7 @@
+# 0.12.1
+
+* Rebuilt to get the latest AL2 updates.
+
 # 0.12.0
 
 * Allow setting port in SSHD config ([#118])

@@ -1,8 +1,8 @@
 ################################################################################
 # Base image for all builds
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2 AS builder-base
-RUN yum group install -y "Development Tools"
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS builder-base
+RUN dnf group install -y "Development Tools"
 RUN useradd builder
 
 
@@ -10,7 +10,7 @@ RUN useradd builder
 # Statically linked, more recent version of bash
 
 FROM builder-base AS builder-static
-RUN yum install -y glibc-static
+RUN dnf install -y glibc-static
 
 ARG musl_version=1.2.5
 ARG bash_version=5.1.16
@@ -47,6 +47,8 @@ RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
         --enable-static-link \
         --without-bash-malloc \
     || { cat config.log; exit 1; }
+RUN make lib/sh/libsh.a && \
+    cd ./lib/sh && ar d libsh.a strtoimax.o && ranlib libsh.a
 RUN make -j`nproc`
 RUN cp bash /opt/bash
 RUN mkdir -p /usr/share/licenses/bash && \
@@ -54,59 +56,17 @@ RUN mkdir -p /usr/share/licenses/bash && \
 
 
 ################################################################################
-# Rebuild of Amazon Linux 2's systemd v219 with downstream patches
-
-FROM builder-base AS builder-systemd
-RUN yum install -y yum-utils rpm-build
-RUN yum-builddep -y systemd
-
-USER builder
-WORKDIR /home/builder
-RUN yumdownloader --source systemd
-RUN rpm -Uv systemd-219-*.src.rpm
-
-WORKDIR /home/builder/rpmbuild/SOURCES
-COPY systemd-patches/*.patch ./
-
-WORKDIR /home/builder/rpmbuild/SPECS
-# Recreate the spec file from three parts: everything up until the last upstream
-# patch, downstream patches, everything else.
-RUN last_patch=$(awk '/^Patch[0-9]+/ { line = NR } END { print line }' systemd.spec); \
-    head -n${last_patch} systemd.spec >systemd.mod.spec; \
-    { \
-        echo ;\
-        echo '# Bottlerocket Patches'; \
-        echo 'Patch9500: 9500-cgroup-util-extract-cgroup-hierarchy-base-path-into-.patch'; \
-        echo 'Patch9501: 9501-cgroup-util-accept-cgroup-hierarchy-base-as-option.patch'; \
-        echo 'Patch9502: 9502-core-move-initialization-of-.slice-and-init.scope-in.patch'; \
-        echo 'Patch9503: 9503-core-drop-.slice-from-shipped-units.patch'; \
-        echo 'Patch9504: 9504-core-skip-restart-when-a-JOB_STOP-job-is-pending.patch'; \
-        echo ; \
-    } >>systemd.mod.spec; \
-    tail -n+$((last_patch + 1)) systemd.spec >>systemd.mod.spec; \
-    mv systemd.mod.spec systemd.spec
-RUN rpmbuild --bb systemd.spec
-
-
-################################################################################
 # Actual admin container image
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 ARG IMAGE_VERSION
 # Make the container image version a mandatory build argument
 RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-# Install the custom systemd build in the same transaction as all original
-# packages to save space. For example, openssh-server pulls in systemd. This
-# dependency is best satisfied by the downstream build. Reinstalling it later
-# would result in also carrying around the original systemd in the final image
-# where it would remain forever hidden and unused in a lower layer.
-RUN --mount=type=bind,from=builder-systemd,source=/home/builder/rpmbuild/RPMS,target=/tmp/systemd-rpms \
-    yum update -y \
-    && yum install -y \
-        /tmp/systemd-rpms/*/systemd-{219,libs}*.rpm \
+RUN dnf update -y \
+    && dnf install -y \
         ec2-instance-connect \
         jq \
         openssh-server \
@@ -115,7 +75,7 @@ RUN --mount=type=bind,from=builder-systemd,source=/home/builder/rpmbuild/RPMS,ta
         shadow-utils \
         sudo \
         util-linux \
-    && yum clean all
+    && dnf clean all
 
 # Delete SELinux config file to prevent relabeling with contexts provided by the container's image
 RUN rm -rf /etc/selinux/config

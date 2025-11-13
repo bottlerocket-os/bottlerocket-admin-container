@@ -13,7 +13,7 @@ FROM builder-base AS builder-static
 RUN dnf install -y glibc-static
 
 ARG musl_version=1.2.5
-ARG bash_version=5.1.16
+ARG bash_version=5.2.37
 
 WORKDIR /opt/build
 COPY ./sdk-fetch ./
@@ -47,8 +47,11 @@ RUN CC=""/usr/local/musl/bin/musl-gcc CFLAGS="-Os -DHAVE_DLOPEN=0" \
         --enable-static-link \
         --without-bash-malloc \
     || { cat config.log; exit 1; }
+
+# Build bash library first, then remove conflicting strtoimax object to avoid duplicate symbols with musl
 RUN make lib/sh/libsh.a && \
-    cd ./lib/sh && ar d libsh.a strtoimax.o && ranlib libsh.a
+    ar d lib/sh/libsh.a lib/sh/strtoimax.o && \
+    ranlib lib/sh/libsh.a
 RUN make -j`nproc`
 RUN cp bash /opt/bash
 RUN mkdir -p /usr/share/licenses/bash && \

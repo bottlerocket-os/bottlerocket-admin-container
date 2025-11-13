@@ -70,6 +70,7 @@ LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
 RUN dnf update -y \
     && dnf install -y \
+        crypto-policies-scripts \
         ec2-instance-connect \
         jq \
         openssh-server \

@@ -1,3 +1,11 @@
+# 0.20.0
+
+* Rebase on Amazon Linux 2023 ([#125])
+* Enable FIPS on FIPS-enabled hosts. ([#125])
+* Update bash to version 5.2.37 ([#125])
+
+[#125]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/125
+
 # 0.12.5
 
 * Rebuilt to get the latest AL2 updates.

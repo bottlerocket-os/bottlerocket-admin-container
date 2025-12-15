@@ -11,6 +11,9 @@ declare -r SSH_HOST_KEY_DIR="${PERSISTENT_STORAGE_BASE_DIR}/etc/ssh"
 declare -r USER_DATA="${PERSISTENT_STORAGE_BASE_DIR}/user-data"
 declare -r HOST_CERTS="/.bottlerocket/certs"
 
+#shellcheck disable=SC2155  # If not set then we'll treat it as 0
+declare -r FIPS_MODE_FLAG=$(cat '/proc/sys/crypto/fips_enabled' 2>/dev/null || echo 0)
+
 if [ ! -s "${USER_DATA}" ]; then
   log "Admin host-container user-data is empty, going to sleep forever"
   exec sleep infinity
@@ -44,6 +47,16 @@ link_host_certs() {
   # Update the CA trust to pickup the new certificates
   update-ca-trust
 }
+
+# Update crypto policies to FIPS if FIPS is enabled
+if [[ ${FIPS_MODE_FLAG} -eq 1 ]]; then
+  update-crypto-policies --set FIPS 2>/dev/null
+  if [[ "$(cat '/etc/crypto-policies/config')" != "FIPS" ]]; then
+    log "Failed to validate FIPS configuration"
+    exit 1
+  fi
+fi
+
 
 get_user_data_keys() {
     # Extract the keys from user-data json
@@ -207,7 +220,13 @@ fi
 
 # Generate the server keys
 mkdir -p "${SSH_HOST_KEY_DIR}"
-for key_alg in rsa ecdsa ed25519; do
+# Skip ED25519 in FIPS mode as it's not allowed
+key_algorithms=(rsa ecdsa)
+if [[ "${FIPS_MODE_FLAG}" -ne 1 ]]; then
+  key_algorithms+=(ed25519)
+fi
+
+for key_alg in "${key_algorithms[@]}"; do
   # If both of the keys exist, don't overwrite them
   if [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" ]] \
   && [[ -s "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" ]]; then
@@ -219,7 +238,10 @@ for key_alg in rsa ecdsa ed25519; do
   rm -rf \
     "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" \
     "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
-  if ssh-keygen -t "${key_alg}" -f "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
+
+  if ssh-keygen -t "${key_alg}" -f 
+"${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
+
     chmod 600 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key"
     chmod 644 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
     ln -sf "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub" "${SSHD_CONFIG_DIR}/ssh_host_${key_alg}_key.pub"
@@ -228,6 +250,15 @@ for key_alg in rsa ecdsa ed25519; do
   fi
 done
 
+readonly host_cgroup="/.bottlerocket/rootfs/sys/fs/cgroup"
+
+cgroup_fstype="$(findmnt -n -o FSTYPE "${host_cgroup}")"
+if [[ "${cgroup_fstype}" == "tmpfs" ]]; then
+  # Host uses cgroup v1, so use cgroup v1 in container too
+  ln -sf "${host_cgroup}" /sys/fs/cgroup
+  log "cgroup v1 enabled in admin container to match host"
+fi
+
 install_proxy_profile
 
 enable_systemd_services
@@ -235,31 +266,6 @@ enable_systemd_services
 [[ -d "${HOST_CERTS}" ]] && link_host_certs
 
 systemd_options=()
-
-# cgroup v2 compatibility crimes: systemd 219 in the admin container only
-# supports cgroup v1.
-if [[ $(findmnt -n -o FSTYPE /sys/fs/cgroup) = cgroup2 ]]; then
-    # Mount an extra cgroup v1 hierarchy for use by systemd in the admin
-    # container. Vanilla systemd is hard-wired to look for it at /sys/fs/cgroup
-    # but that path is already taken by the host's proper cgroup hierarchy.
-    # Mounting a cgroup v1 hierarchy here might confuse the host and the systemd
-    # documentation advises against manually interfering with anything in that
-    # path. Therefore, mount the extra hierarchy elsewhere and tell systemd in
-    # the admin container where to look. Requirements:
-    #
-    #   1. The base must be a mount point.
-    #   2. The base must contain another mounted cgroup file system named "systemd".
-    #
-    # In either case there is no need to populate the file systems with any
-    # actual cgroup controllers, since the host is expected to manage processes.
-    readonly cgroup_base=/.bottlerocket/admin-container-cgroup
-    mkdir -p "${cgroup_base}"
-    mount -t tmpfs -o nosuid,nodev,noexec tmpfs "${cgroup_base}"
-    mkdir -p "${cgroup_base}"/systemd
-    mount -o remount,ro "${cgroup_base}"
-    mount -t cgroup -o none,name=systemd cgroup "${cgroup_base}"/systemd
-    systemd_options+=( --cgroup-base "${cgroup_base}" )
-fi
 
 # Persuade systemd that it's OK to run as a user manager.
 export XDG_RUNTIME_DIR="/run/user/${UID}"

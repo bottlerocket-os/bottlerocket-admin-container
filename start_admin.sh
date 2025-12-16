@@ -239,8 +239,7 @@ for key_alg in "${key_algorithms[@]}"; do
     "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" \
     "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"
 
-  if ssh-keygen -t "${key_alg}" -f 
-"${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
+  if ssh-keygen -t "${key_alg}" -f "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key" -q -N ""; then
 
     chmod 600 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key"
     chmod 644 "${SSH_HOST_KEY_DIR}/ssh_host_${key_alg}_key.pub"

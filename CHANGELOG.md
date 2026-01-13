@@ -1,3 +1,7 @@
+# 0.20.1
+
+* Rebuilt to get the latest AL2023 updates.
+
 # 0.20.0
 
 * Rebase on Amazon Linux 2023 ([#125])

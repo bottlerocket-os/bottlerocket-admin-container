@@ -1,0 +1,3 @@
+#!/bin/bash
+# Wrapper to run lsmod from the Bottlerocket host via chroot
+exec chroot /.bottlerocket/rootfs /usr/bin/lsmod "$@"

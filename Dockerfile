@@ -99,7 +99,7 @@ RUN echo "PS1='$CUSTOM_PS1'" > "/etc/profile.d/bottlerocket-ps1.sh" \
 
 COPY --chmod=755 start_admin.sh /usr/sbin/
 COPY ./sshd_config /etc/ssh/
-COPY --chmod=755 ./sheltie /usr/bin/
+COPY --chmod=755 ./sheltie ./host-wrappers/* ./nvidia-bug-report.sh /usr/bin/
 
 RUN groupadd -g 274 api
 

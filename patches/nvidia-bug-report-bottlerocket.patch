@@ -1,0 +1,23 @@
+--- nvidia-bug-report.sh.orig
++++ nvidia-bug-report.sh
+@@ -26,6 +26,20 @@
+ 
+ BASE_LOG_FILENAME="nvidia-bug-report.log"
+ 
++# Bottlerocket: host root filesystem prefix
++HOST_ROOT="${HOST_ROOT:-}"
++if [ -d "/.bottlerocket/rootfs" ]; then
++    HOST_ROOT="/.bottlerocket/rootfs"
++    # Install required tools in admin container
++    dnf install -y -q which dmidecode acpica-tools 2>/dev/null || true
++fi
++
++# Bottlerocket: wrapper functions for host binaries
++if [ -d "/.bottlerocket/rootfs" ]; then
++    __host_run() { chroot /.bottlerocket/rootfs "$@"; }
++    journalctl() { __host_run /usr/bin/journalctl "$@"; }
++    systemctl() { __host_run /usr/bin/systemctl "$@"; }
++fi
+ # check if gzip is present
+ GZIP_CMD=`which gzip 2> /dev/null | head -n 1`
+ if [ $? -eq 0 -a "$GZIP_CMD" ]; then

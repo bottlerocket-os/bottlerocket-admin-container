@@ -156,3 +156,23 @@ Once you've created your JSON, you'll need to base64-encode it and set it as the
 # ex: echo '{"ssh":{"authorized-keys":[]}}' | base64
 user-data = "eyJzc2giOnsiYXV0aG9yaXplZC1rZXlzIjpbXX19Cg=="
 ```
+
+## NVIDIA GPU Bug Report Script
+
+The admin container includes `nvidia-bug-report.sh`, a patched version of NVIDIA's diagnostic script adapted for Bottlerocket.
+This script collects comprehensive GPU diagnostics for troubleshooting NVIDIA hardware issues.
+
+### Prerequisites
+
+- A GPU-enabled Bottlerocket variant (e.g. `aws-k8s-*-nvidia`, `aws-ecs-*-nvidia`)
+- The script installs a few additonal packages when run so access to AL2023 repos is also required
+
+### Usage
+
+Enter the admin container either from the control container or SSH if configured. Then run the script:
+
+```bash
+sudo nvidia-bug-report.sh
+```
+
+The output is saved as `nvidia-bug-report.log.gz` in the current directory.

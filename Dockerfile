@@ -2,7 +2,8 @@
 # Base image for all builds
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS builder-base
-RUN dnf group install -y "Development Tools"
+RUN dnf upgrade -y --releasever=latest && \
+  dnf group install -y "Development Tools"
 RUN useradd builder
 
 
@@ -10,7 +11,8 @@ RUN useradd builder
 # Statically linked, more recent version of bash
 
 FROM builder-base AS builder-static
-RUN dnf install -y glibc-static
+RUN dnf upgrade -y --releasever=latest && \
+  dnf install -y glibc-static
 
 ARG musl_version=1.2.5
 ARG bash_version=5.2.37
@@ -68,7 +70,7 @@ ARG IMAGE_VERSION
 RUN test -n "$IMAGE_VERSION"
 LABEL "org.opencontainers.image.version"="$IMAGE_VERSION"
 
-RUN dnf update -y \
+RUN dnf upgrade -y --releasever=latest \
     && dnf install -y \
         crypto-policies-scripts \
         ec2-instance-connect \

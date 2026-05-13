@@ -1,3 +1,9 @@
+# 0.21.0
+
+* Replace dnf update with dnf upgrade --releasever=latest ([#136])
+
+[#136]: https://github.com/bottlerocket-os/bottlerocket-admin-container/pull/136
+
 # 0.20.6
 
 * Rebuilt to get the latest AL2023 updates.
